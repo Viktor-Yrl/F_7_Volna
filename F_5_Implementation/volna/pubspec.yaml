@@ -1,0 +1,29 @@
+name: music_player_full
+description: Local music folders, playlists and built-in radio.
+publish_to: none
+version: 1.6.0+11
+environment:
+  sdk: ^3.10.8
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: 0.20.2
+  just_audio: 0.10.6
+  just_audio_background: 0.0.1-beta.17
+  audio_service: 0.18.19
+  audio_session: 0.2.4
+  path_provider: 2.1.6
+  path: ^1.9.1
+  html: 0.15.6
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+flutter:
+  generate: true
+  uses-material-design: true
+  assets:
+    - assets/images/cover.png
+    - assets/radio/

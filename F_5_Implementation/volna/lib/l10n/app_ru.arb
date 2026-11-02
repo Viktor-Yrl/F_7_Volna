@@ -1,0 +1,94 @@
+{
+  "savedDeviceTracks": "Сохранённые треки телефона",
+  "@@locale": "ru",
+  "playlists": "Плейлисты",
+  "radio": "Радио",
+  "top100": "Топ-100",
+  "settings": "Настройки",
+  "language": "Язык",
+  "refreshLibrary": "Обновить медиатеку",
+  "addFolder": "Добавить папку",
+  "musicFolders": "Музыкальные папки",
+  "noTracksAvailable": "Нет доступных треков",
+  "noListeningHistory": "Пока нет прослушиваний",
+  "removeFavorite": "Убрать из избранного",
+  "favorite": "В избранное",
+  "removeFolder": "Убрать папку из медиатеки",
+  "nowPlaying": "Сейчас играет",
+  "playbackQueue": "Очередь воспроизведения",
+  "queue": "Очередь",
+  "stop": "Остановить",
+  "repeatOff": "Повтор выключен",
+  "repeatAll": "Повтор очереди",
+  "repeatOne": "Повтор трека",
+  "noTrackSelected": "Нет выбранного трека",
+  "live": "ПРЯМОЙ ЭФИР",
+  "liveRadio": "Прямой эфир",
+  "previousTrack": "Предыдущий трек",
+  "nextTrack": "Следующий трек",
+  "play": "Воспроизвести",
+  "pause": "Пауза",
+  "replay": "Слушать снова",
+  "shuffle": "Случайный порядок",
+  "closeMessage": "Закрыть сообщение",
+  "mountainLake": "Горное озеро",
+  "unknownArtist": "Неизвестный исполнитель",
+  "untitled": "Без названия",
+  "downloadedFile": "Загруженный файл",
+  "marusyaTitle": "Маруся FM",
+  "europaTitle": "Европа Плюс",
+  "marusyaDescription": "Россия · Русские хиты",
+  "europaDescription": "Россия · Поп-музыка",
+  "bbcDescription": "Великобритания · Международные новости",
+  "comedyUkDescription": "Великобритания · Британский стендап",
+  "comedyUsDescription": "США · Разговорный юмор",
+  "invalidAudioUrl": "Введите прямую ссылку http:// или https:// без логина и пароля.",
+  "libraryLoadFailed": "Не удалось прочитать сохранённую музыку. Обновите выбранные папки.",
+  "libraryScanFailed": "Не удалось обновить медиатеку. Проверьте разрешение на музыку в настройках Android.",
+  "folderOpenFailed": "Не удалось открыть папку. Выберите доступную папку с музыкой.",
+  "saveFailed": "Не удалось сохранить изменения. Проверьте свободное место.",
+  "corruptBackup": "Поврежденный файл настроек сохранен в резервную копию.",
+  "stationUnavailable": "Станция временно недоступна. Проверьте интернет или выберите другую станцию.",
+  "playbackFailed": "Не удалось воспроизвести запись. Проверьте файл или доступ к музыке.",
+  "sourceUnavailable": "Запись недоступна. Выберите другой файл или проверьте доступ к папке.",
+  "toggleFailed": "Не удалось изменить воспроизведение.",
+  "stopFailed": "Не удалось остановить проигрыватель.",
+  "playerCommandFailed": "Не удалось выполнить команду проигрывателя.",
+  "radioRedirects": "Слишком много переходов радио. Станция недоступна.",
+  "radioPageTooLarge": "Станция вернула слишком большую веб-страницу.",
+  "radioWebsite": "Станция вернула сайт вместо аудиопотока.",
+  "settingsSaveFailed": "Не удалось сохранить язык. Предыдущий выбор не изменён.",
+  "trackCount": "{count, plural, =0{0 треков} one{{count} трек} few{{count} трека} many{{count} треков} other{{count} трека}}",
+  "@trackCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "logoLabel": "Логотип {name}",
+  "@logoLabel": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "foldersUnavailable": "Нет доступа к папкам: {names}. Выберите их заново.",
+  "@foldersUnavailable": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "radioHttp": "Сервер радио ответил HTTP {status}. Станция временно недоступна.",
+  "@radioHttp": {
+    "placeholders": {
+      "status": {
+        "type": "int"
+      }
+    }
+  },
+  "savedFiles": "Сохранённые файлы"
+}

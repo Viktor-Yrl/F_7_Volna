@@ -1,0 +1,94 @@
+{
+  "savedDeviceTracks": "Saved device tracks",
+  "@@locale": "en",
+  "playlists": "Playlists",
+  "radio": "Radio",
+  "top100": "Top 100",
+  "settings": "Settings",
+  "language": "Language",
+  "refreshLibrary": "Refresh library",
+  "addFolder": "Add folder",
+  "musicFolders": "Music folders",
+  "noTracksAvailable": "No available tracks",
+  "noListeningHistory": "No listening history yet",
+  "removeFavorite": "Remove from favorites",
+  "favorite": "Add to favorites",
+  "removeFolder": "Remove folder from library",
+  "nowPlaying": "Now playing",
+  "playbackQueue": "Playback queue",
+  "queue": "Queue",
+  "stop": "Stop",
+  "repeatOff": "Repeat off",
+  "repeatAll": "Repeat queue",
+  "repeatOne": "Repeat track",
+  "noTrackSelected": "No track selected",
+  "live": "LIVE",
+  "liveRadio": "Live radio",
+  "previousTrack": "Previous track",
+  "nextTrack": "Next track",
+  "play": "Play",
+  "pause": "Pause",
+  "replay": "Play again",
+  "shuffle": "Shuffle",
+  "closeMessage": "Dismiss message",
+  "mountainLake": "Mountain lake",
+  "unknownArtist": "Unknown artist",
+  "untitled": "Untitled",
+  "downloadedFile": "Downloaded file",
+  "marusyaTitle": "Marusya FM",
+  "europaTitle": "Europa Plus",
+  "marusyaDescription": "Russia · Russian hits",
+  "europaDescription": "Russia · Pop music",
+  "bbcDescription": "UK · International news",
+  "comedyUkDescription": "UK · British stand-up",
+  "comedyUsDescription": "USA · Talk comedy",
+  "invalidAudioUrl": "Enter a direct http:// or https:// URL without a username or password.",
+  "libraryLoadFailed": "Could not load saved music. Try refreshing your folders.",
+  "libraryScanFailed": "Could not refresh the library. Check the Android music permission.",
+  "folderOpenFailed": "Could not open this folder. Select an accessible music folder.",
+  "saveFailed": "Could not save changes. Check available storage.",
+  "corruptBackup": "A damaged settings file was preserved as a backup.",
+  "stationUnavailable": "The station is temporarily unavailable. Check your internet connection or choose another station.",
+  "playbackFailed": "Could not play this track. Check the file and music access.",
+  "sourceUnavailable": "This track is unavailable. Choose another file or check folder access.",
+  "toggleFailed": "Could not change playback.",
+  "stopFailed": "Could not stop playback.",
+  "playerCommandFailed": "Could not perform the player command.",
+  "radioRedirects": "Too many radio redirects. The station is unavailable.",
+  "radioPageTooLarge": "The station returned an unexpected large web page.",
+  "radioWebsite": "The station returned a website instead of an audio stream.",
+  "settingsSaveFailed": "Could not save the language. Your previous selection is unchanged.",
+  "trackCount": "{count, plural, =0{0 tracks} one{1 track} other{{count} tracks}}",
+  "@trackCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "logoLabel": "{name} logo",
+  "@logoLabel": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "foldersUnavailable": "Folder access lost: {names}. Select them again.",
+  "@foldersUnavailable": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "radioHttp": "Radio server returned HTTP {status}. The station is temporarily unavailable.",
+  "@radioHttp": {
+    "placeholders": {
+      "status": {
+        "type": "int"
+      }
+    }
+  },
+  "savedFiles": "Saved files"
+}
