@@ -42,6 +42,22 @@ void main() {
     expect(native.preloaded, isFalse);
     expect(native.active, isFalse);
   });
+  test(
+    'position ticks reach progress and checkpoints but not track lists',
+    () async {
+      await player.playTracks(tracks);
+      var states = 0, ticks = 0;
+      player.addListener(() => states++);
+      player.progress.addListener(() => ticks++);
+      native.positions.add(const Duration(seconds: 4));
+      native.positions.add(const Duration(seconds: 5));
+      expect(ticks, 2);
+      expect(states, 0);
+      expect(player.checkpoint()['positionMs'], 5000);
+      await player.toggle();
+      expect(states, greaterThan(0));
+    },
+  );
   test('stop invalidates pending load and clears native queue', () async {
     native.pendingLoad = Completer<Duration?>();
     final loading = player.playTracks(tracks);
@@ -67,7 +83,7 @@ void main() {
         id: 'r',
         uri: 'https://example.com/live',
         title: 'Radio',
-        origin: 'radio',
+        isRadio: true,
       ),
     ]);
     expect(player.canSeek, isFalse);

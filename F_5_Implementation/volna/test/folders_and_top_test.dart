@@ -10,6 +10,9 @@ class FolderMedia extends MediaLibrary {
   MusicFolder? selection;
   final content = <String, List<Track>>{};
   final revoked = <String>{};
+  Set<String> kept = {};
+  @override
+  Future<void> keepFolderGrants(Set<String> roots) async => kept = roots;
   @override
   bool get supported => true;
   @override
@@ -22,12 +25,7 @@ class FolderMedia extends MediaLibrary {
 }
 
 void main() {
-  const track = Track(
-    id: 'folder:1',
-    uri: 'content://music/1',
-    title: 'Song',
-    origin: 'folder',
-  );
+  const track = Track(id: 'folder:1', uri: 'content://music/1', title: 'Song');
   test(
     'listen threshold excludes clicks, seeks, pause and radio; repeat counts',
     () {
@@ -85,7 +83,7 @@ void main() {
             id: 'r',
             uri: 'https://example.com',
             title: 'R',
-            origin: 'radio',
+            isRadio: true,
           ),
           Duration(seconds: second),
           Duration.zero,
@@ -137,6 +135,34 @@ void main() {
       },
     );
     test(
+      'release removed tree only when its queued document is no longer in use',
+      () async {
+        const a = 'content://storage/tree/A';
+        const b = 'content://storage/tree/B';
+        for (final uri in [a, b]) {
+          media.selection = MusicFolder(uri: uri, name: uri);
+          await library.addFolder();
+        }
+        await library.updateQueueRoots([
+          const Track(
+            id: 'folder:1',
+            uri: '$a/document/A%2Fsong.mp3',
+            title: 'Song',
+          ),
+        ]);
+        await library.removeFolder(a);
+        expect(media.kept, {a, b});
+        await library.updateQueueRoots([]);
+        expect(media.kept, {b});
+        media.selection = const MusicFolder(uri: a, name: 'A');
+        media.revoked.add(a);
+        await library.addFolder();
+        expect(media.kept, {b});
+        await library.removeFolder(b);
+        expect(media.kept, isEmpty);
+      },
+    );
+    test(
       'cancel and revoked permission handled without losing configuration',
       () async {
         await library.addFolder();
@@ -156,32 +182,27 @@ void main() {
       media.selection = const MusicFolder(uri: 'tree:a', name: 'A');
       media.content['tree:a'] = List.generate(
         105,
-        (i) => Track(
-          id: 'f$i',
-          uri: 'content://$i',
-          title: 'Track $i',
-          origin: 'folder',
-        ),
+        (i) => Track(id: 'folder:$i', uri: 'content://$i', title: 'Track $i'),
       );
       await library.addFolder();
       for (final song in library.tracks) {
         await library.recordPlay(song);
       }
-      await library.recordPlay(library.find('f104')!);
+      await library.recordPlay(library.find('folder:104')!);
       await library.recordPlay(
         const Track(
           id: 'radio',
           uri: 'https://example.com',
           title: 'R',
-          origin: 'radio',
+          isRadio: true,
         ),
       );
       expect(library.topTracks, hasLength(100));
-      expect(library.topTracks.first.id, 'f104');
+      expect(library.topTracks.first.id, 'folder:104');
       expect(library.playCount('radio'), 0);
       final reloaded = LibraryController(store: store, media: media);
       await reloaded.initialize();
-      expect(reloaded.playCount('f104'), 2);
+      expect(reloaded.playCount('folder:104'), 2);
       expect(reloaded.topTracks, hasLength(100));
       reloaded.dispose();
     });

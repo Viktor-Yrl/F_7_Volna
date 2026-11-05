@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 
 import 'models.dart';
 
-/// Android document-tree access and restoration of legacy track IDs.
+/// Reads Android document trees selected by the user.
 class MediaLibrary {
   static const _channel = MethodChannel('music_player_full/library');
   bool get supported => Platform.isAndroid;
@@ -29,15 +29,10 @@ class MediaLibrary {
     if (supported) await _channel.invokeMethod<bool>('requestNotifications');
   }
 
-  Future<List<Track>> restoreLegacyTracks(List<String> ids) async {
-    if (!supported || ids.isEmpty) return [];
-    final rows =
-        await _channel.invokeListMethod<dynamic>('restoreLegacyTracks', {
-          'ids': ids,
-        }) ??
-        [];
-    return rows
-        .map((row) => Track.fromJson(Map<String, dynamic>.from(row as Map)))
-        .toList();
+  Future<void> keepFolderGrants(Set<String> roots) async {
+    if (!Platform.isAndroid) return;
+    await _channel.invokeMethod<void>('keepFolderGrants', {
+      'roots': roots.toList(),
+    });
   }
 }

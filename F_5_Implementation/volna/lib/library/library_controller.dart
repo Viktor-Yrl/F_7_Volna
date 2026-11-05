@@ -12,13 +12,12 @@ class LibraryController extends ChangeNotifier {
     : media = media ?? MediaLibrary();
   final LibraryStore store;
   final MediaLibrary media;
-  final List<Track> _savedFiles = [];
-  final List<Track> _retainedDeviceTracks = [];
-  final List<Track> _legacyStations = [];
-  final List<SavedPlaylist> _savedPlaylists = [];
-  final Set<String> _favorites = {};
   final List<MusicFolder> _folders = [];
-  final List<Track> _folderTracks = [];
+  Set<String>? _savedRoots;
+  Set<String> _queueRoots = {};
+  bool _incompleteScan = false;
+  bool get incompleteScan => _incompleteScan;
+  Map<String, Track> _tracksById = {};
   // Membership is kept per selected root; overlapping roots share track IDs.
   final Map<String, List<Track>> _tracksByFolder = {};
   List<Track> tracksForFolder(String uri) =>
@@ -42,36 +41,12 @@ class LibraryController extends ChangeNotifier {
   bool _disposed = false;
   bool busy = false;
   UiMessage? error;
-  List<Track> get tracks => List.unmodifiable(
-    {
-      for (final track in [
-        ..._savedFiles,
-        ..._retainedDeviceTracks,
-        ..._folderTracks,
-      ])
-        track.id: track,
-    }.values,
-  );
-  List<Track> get savedFiles => List.unmodifiable(_savedFiles);
-  List<Track> get retainedDeviceTracks =>
-      List.unmodifiable(_retainedDeviceTracks);
+  List<Track> get tracks => List.unmodifiable(_tracksById.values);
   List<Track> get stations => RadioCatalog.stations;
-  List<SavedPlaylist> get savedPlaylists => List.unmodifiable(_savedPlaylists);
-  bool isFavorite(String id) => _favorites.contains(id);
-  Track? find(String id) {
-    for (final track in [...tracks, ...stations]) {
-      if (track.id == id) return track;
-    }
-    for (final legacy in _legacyStations) {
-      if (legacy.id == id) return RadioCatalog.replacementFor(legacy);
-    }
-    return null;
-  }
+  Track? find(String id) =>
+      _tracksById[id] ??
+      stations.where((station) => station.id == id).firstOrNull;
 
-  List<Track> savedPlaylistTracks(SavedPlaylist list) => [
-    for (final id in list.trackIds)
-      if (find(id) case final Track track) track,
-  ];
   void _notify() {
     if (!_disposed) notifyListeners();
   }
@@ -81,79 +56,64 @@ class LibraryController extends ChangeNotifier {
     _notify();
   }
 
+  // A document URI contains the exact tree grant used to open it. Overlapping
+  // roots may expose the same song through different grants.
+  Future<void> updateQueueRoots(List<Track> queue) async {
+    _queueRoots = {
+      for (final track in queue)
+        if (track.uri.startsWith('content://') &&
+            track.uri.contains('/document/'))
+          track.uri.substring(0, track.uri.indexOf('/document/')),
+    };
+    if (!busy) await _syncGrants();
+  }
+
+  Future<void> _syncGrants() async {
+    final saved = _savedRoots;
+    if (saved == null || _disposed) return;
+    try {
+      await media.keepFolderGrants({
+        ...saved,
+        ..._folders.map((f) => f.uri),
+        ..._queueRoots,
+      });
+    } catch (_) {
+      error = const UiMessage(MessageId.folderCleanupFailed);
+      _notify();
+    }
+  }
+
   Future<void> initialize() async {
     // Restore user metadata before scanning currently accessible audio sources.
     busy = true;
     _notify();
     try {
       final data = await store.read('library');
-      _savedFiles.addAll(
-        (data['tracks'] as List? ?? []).map(
-          (e) => Track.fromJson(Map<String, dynamic>.from(e)),
-        ),
-      );
-      _legacyStations.addAll(
-        (data['stations'] as List? ?? []).map(
-          (e) => Track.fromJson(Map<String, dynamic>.from(e)),
-        ),
-      );
-      _savedPlaylists.addAll(
-        (data['playlists'] as List? ?? []).map(
-          (e) => SavedPlaylist.fromJson(Map<String, dynamic>.from(e)),
-        ),
-      );
-      _favorites.addAll((data['favorites'] as List? ?? []).cast<String>());
       _folders.addAll(
         (data['folders'] as List? ?? []).map(
           (e) => MusicFolder.fromJson(Map<String, dynamic>.from(e)),
-        ),
-      );
-      _retainedDeviceTracks.addAll(
-        (data['retainedDeviceTracks'] as List? ?? []).map(
-          (e) => Track.fromJson(Map<String, dynamic>.from(e)),
         ),
       );
       final counts = Map<String, dynamic>.from(
         data['playCounts'] as Map? ?? {},
       );
       for (final entry in counts.entries) {
-        if (entry.value is num && (entry.value as num) > 0) {
+        if (entry.key.startsWith('folder:') &&
+            entry.value is num &&
+            (entry.value as num) > 0) {
           _playCounts[entry.key] = (entry.value as num).toInt();
         }
       }
       error = store.warning;
-      await _restoreLegacyReferences();
+      if (error == null) _savedRoots = _folders.map((f) => f.uri).toSet();
       await _refreshFolders();
     } catch (_) {
+      _incompleteScan = true;
       error = const UiMessage(MessageId.libraryLoadFailed);
     } finally {
       busy = false;
+      await _syncGrants();
       _notify();
-    }
-  }
-
-  Future<void> _restoreLegacyReferences() async {
-    // Older releases persisted device IDs, not their metadata. Resolve only IDs
-    // used by a playlist, favorite, history or saved queue; never scan all music.
-    final playback = await store.read('playback');
-    final ids =
-        <String>{
-          ..._favorites,
-          ..._playCounts.keys,
-          for (final list in _savedPlaylists) ...list.trackIds,
-          ...(playback['ids'] as List? ?? []).cast<String>(),
-        }..removeWhere(
-          (id) =>
-              !id.startsWith('media:') ||
-              _retainedDeviceTracks.any((track) => track.id == id),
-        );
-    if (ids.isEmpty) return;
-    try {
-      final restored = await media.restoreLegacyTracks(ids.toList());
-      _retainedDeviceTracks.addAll(restored);
-      if (restored.isNotEmpty) await save();
-    } catch (_) {
-      // Keep unresolved IDs in user data so access can be restored later.
     }
   }
 
@@ -168,21 +128,22 @@ class LibraryController extends ChangeNotifier {
       error = const UiMessage(MessageId.libraryScanFailed);
     } finally {
       busy = false;
+      await _syncGrants();
       _notify();
     }
   }
 
-  Future<void> _refreshFolders() async {
+  Future<void> _refreshFolders({
+    Map<String, List<Track>> scanned = const {},
+  }) async {
     final tracks = <String, Track>{};
     final failed = <String>[];
     _tracksByFolder.clear();
     for (final folder in _folders) {
       try {
+        final rows = scanned[folder.uri] ?? await media.scanFolder(folder.uri);
         final found =
-            {
-              for (final track in await media.scanFolder(folder.uri))
-                track.id: track,
-            }.values.toList()..sort(
+            {for (final track in rows) track.id: track}.values.toList()..sort(
               (a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()),
             );
         _tracksByFolder[folder.uri] = found;
@@ -193,9 +154,8 @@ class LibraryController extends ChangeNotifier {
         failed.add(folder.name);
       }
     }
-    _folderTracks
-      ..clear()
-      ..addAll(tracks.values);
+    _tracksById = tracks;
+    _incompleteScan = failed.isNotEmpty;
     if (failed.isNotEmpty) {
       error = UiMessage(MessageId.foldersUnavailable, names: failed.join(', '));
     }
@@ -210,15 +170,16 @@ class LibraryController extends ChangeNotifier {
       final folder = await media.pickFolder();
       if (folder == null) return;
       // Keep the current library intact until the new folder is readable.
-      await media.scanFolder(folder.uri);
+      final rows = await media.scanFolder(folder.uri);
       _folders.removeWhere((e) => e.uri == folder.uri);
       _folders.add(folder);
-      await _refreshFolders();
+      await _refreshFolders(scanned: {folder.uri: rows});
       await save();
     } catch (_) {
       error = const UiMessage(MessageId.folderOpenFailed);
     } finally {
       busy = false;
+      await _syncGrants();
       _notify();
     }
   }
@@ -234,6 +195,7 @@ class LibraryController extends ChangeNotifier {
       await save();
     } finally {
       busy = false;
+      await _syncGrants();
       _notify();
     }
   }
@@ -245,27 +207,15 @@ class LibraryController extends ChangeNotifier {
     await save();
   }
 
-  Future<void> toggleFavorite(String id) async {
-    if (!_favorites.add(id)) _favorites.remove(id);
-    _notify();
-    await save();
-  }
-
   Future<void> save() async {
+    final roots = _folders.map((f) => f.uri).toSet();
     try {
       await store.write('library', {
-        'version': 2,
-        'tracks': _savedFiles.map((e) => e.toJson()).toList(),
-        // Preserve legacy station data without exposing custom stations in the UI.
-        'stations': _legacyStations.map((e) => e.toJson()).toList(),
-        'playlists': _savedPlaylists.map((e) => e.toJson()).toList(),
-        'favorites': _favorites.toList(),
+        'version': 3,
         'folders': _folders.map((e) => e.toJson()).toList(),
-        'retainedDeviceTracks': _retainedDeviceTracks
-            .map((e) => e.toJson())
-            .toList(),
         'playCounts': _playCounts,
       });
+      _savedRoots = roots;
     } catch (_) {
       error = const UiMessage(MessageId.saveFailed);
       _notify();

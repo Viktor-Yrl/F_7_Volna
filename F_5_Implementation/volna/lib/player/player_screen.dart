@@ -9,6 +9,7 @@ import '../data/models.dart';
 import '../ui/track_tile.dart';
 import '../ui/track_artwork.dart';
 import '../l10n/strings.dart';
+import 'playback_controller.dart';
 
 /// Full player view; transport actions delegate to the playback controller.
 class PlayerScreen extends StatefulWidget {
@@ -19,8 +20,6 @@ class PlayerScreen extends StatefulWidget {
 }
 
 class _PlayerScreenState extends State<PlayerScreen> {
-  double? _drag;
-  String? _trackId;
   void _queue() {
     final player = widget.app.playback;
     showModalBottomSheet<void>(
@@ -70,10 +69,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
     builder: (context, _) {
       final player = widget.app.playback;
       final track = player.current;
-      if (_trackId != track?.id) {
-        _trackId = track?.id;
-        _drag = null;
-      }
       return Scaffold(
         appBar: AppBar(
           title: Text(context.l10n.nowPlaying),
@@ -153,8 +148,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
   Widget _controls(Track? track) {
     final app = widget.app;
     final player = app.playback;
-    final total = player.duration.inMilliseconds.toDouble();
-    final value = _drag ?? player.position.inMilliseconds.toDouble();
     final repeatIcon = player.repeat == LoopMode.one
         ? Icons.repeat_one_rounded
         : Icons.repeat_rounded;
@@ -184,7 +177,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
           textAlign: TextAlign.center,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(color: Color(0xFFB6BDBE)),
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
         if (track?.isRadio == true)
           Padding(
@@ -192,32 +187,12 @@ class _PlayerScreenState extends State<PlayerScreen> {
             child: Text(
               context.l10n.live,
               textAlign: TextAlign.center,
-              style: TextStyle(color: Color(0xFFB5EE52)),
+              style: TextStyle(color: Theme.of(context).colorScheme.primary),
             ),
           )
         else ...[
           SizedBox(height: 20),
-          Slider(
-            value: value.clamp(0, total > 0 ? total : 1),
-            max: total > 0 ? total : 1,
-            label: formatTime(Duration(milliseconds: value.toInt())),
-            onChanged: player.canSeek
-                ? (value) => setState(() => _drag = value)
-                : null,
-            onChangeEnd: player.canSeek
-                ? (value) async {
-                    await player.seek(Duration(milliseconds: value.toInt()));
-                    if (mounted) setState(() => _drag = null);
-                  }
-                : null,
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(formatTime(Duration(milliseconds: value.toInt()))),
-              Text(formatTime(player.duration)),
-            ],
-          ),
+          _SeekBar(key: ValueKey(track?.id), player: player),
         ],
         SizedBox(height: 24),
         Row(
@@ -280,15 +255,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   : null,
               icon: Icon(repeatIcon),
             ),
-            IconButton(
-              tooltip: context.l10n.favorite,
-              isSelected: track != null && app.library.isFavorite(track.id),
-              onPressed: track != null && !track.isRadio
-                  ? () => unawaited(app.library.toggleFavorite(track.id))
-                  : null,
-              icon: const Icon(Icons.favorite_border_rounded),
-              selectedIcon: const Icon(Icons.favorite_rounded),
-            ),
           ],
         ),
         if (player.error != null) ...[
@@ -296,6 +262,53 @@ class _PlayerScreenState extends State<PlayerScreen> {
           ErrorBanner(message: player.error!, onDismiss: player.clearError),
         ],
       ],
+    );
+  }
+}
+
+class _SeekBar extends StatefulWidget {
+  const _SeekBar({super.key, required this.player});
+  final PlaybackController player;
+
+  @override
+  State<_SeekBar> createState() => _SeekBarState();
+}
+
+class _SeekBarState extends State<_SeekBar> {
+  double? _drag;
+
+  @override
+  Widget build(BuildContext context) {
+    final player = widget.player;
+    return ValueListenableBuilder<Duration>(
+      valueListenable: player.progress,
+      builder: (context, position, _) {
+        final max = math.max(1, player.duration.inMilliseconds).toDouble();
+        final value = _drag ?? position.inMilliseconds.toDouble();
+        final elapsed = formatTime(Duration(milliseconds: value.toInt()));
+        return Column(
+          children: [
+            Slider(
+              value: value.clamp(0.0, max),
+              max: max,
+              label: elapsed,
+              onChanged: player.canSeek
+                  ? (v) => setState(() => _drag = v)
+                  : null,
+              onChangeEnd: player.canSeek
+                  ? (v) async {
+                      await player.seek(Duration(milliseconds: v.toInt()));
+                      if (mounted) setState(() => _drag = null);
+                    }
+                  : null,
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [Text(elapsed), Text(formatTime(player.duration))],
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -311,7 +324,9 @@ class MiniPlayer extends StatelessWidget {
       final track = player.current;
       if (track == null) return const SizedBox.shrink();
       return Material(
-        color: const Color(0xFF303638),
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF303638)
+            : Theme.of(context).colorScheme.surfaceContainer,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -382,13 +397,16 @@ class MiniPlayer extends StatelessWidget {
               ),
             ),
             if (!track.isRadio)
-              LinearProgressIndicator(
-                minHeight: 2,
-                value: player.duration.inMilliseconds > 0
-                    ? (player.position.inMilliseconds /
-                              player.duration.inMilliseconds)
-                          .clamp(0, 1)
-                    : 0,
+              ValueListenableBuilder<Duration>(
+                valueListenable: player.progress,
+                builder: (context, position, _) => LinearProgressIndicator(
+                  minHeight: 2,
+                  value: player.duration.inMilliseconds > 0
+                      ? (position.inMilliseconds /
+                                player.duration.inMilliseconds)
+                            .clamp(0, 1)
+                      : 0,
+                ),
               ),
           ],
         ),

@@ -5,6 +5,7 @@ import 'package:music_player_full/app.dart';
 import 'package:music_player_full/app_controller.dart';
 import 'package:music_player_full/data/library_store.dart';
 import 'package:music_player_full/data/media_library.dart';
+import 'package:music_player_full/data/models.dart';
 import 'package:music_player_full/library/library_controller.dart';
 import 'package:music_player_full/player/playback_controller.dart';
 import 'package:music_player_full/settings/app_settings.dart';
@@ -16,6 +17,8 @@ import 'fake_player.dart';
 class NoDeviceMedia extends MediaLibrary {
   @override
   bool get supported => false;
+  @override
+  Future<List<Track>> scanFolder(String uri) async => [];
 }
 
 class FailingSettingsStore extends LibraryStore {
@@ -42,11 +45,17 @@ void main() {
       final settings = AppSettings(store);
       await settings.initialize();
       expect(settings.languageCode, 'en');
+      expect(settings.lightTheme, isFalse);
+      await settings.setLightTheme(true);
       await settings.setLanguage('ru');
       final restored = AppSettings(store);
       await restored.initialize();
       expect(restored.languageCode, 'ru');
+      expect(restored.lightTheme, isTrue);
       await restored.setLanguage('en');
+      expect((await store.read('settings'))['theme'], 'light');
+      await restored.setLightTheme(false);
+      expect((await store.read('settings'))['language'], 'en');
       expect((await store.read('settings'))['language'], 'en');
       await store.write('settings', {'language': 'fr'});
       await restored.initialize();
@@ -101,8 +110,8 @@ void main() {
         );
         await tester.runAsync(() async {
           await store.write('library', {
-            'playlists': [
-              {'id': 'old:list', 'name': 'Моя музыка', 'trackIds': <String>[]},
+            'folders': [
+              {'uri': 'content://music', 'name': 'Моя музыка'},
             ],
           });
           await app.initialize();
@@ -112,6 +121,12 @@ void main() {
         expect(find.text('Top 100'), findsWidgets);
         await tester.tap(find.text('Settings').last);
         await tester.pumpAndSettle();
+        await tester.runAsync(() async {
+          await tester.tap(find.text('Light — Mist Blue'));
+          await store.flush();
+        });
+        await tester.pumpAndSettle();
+        expect(Theme.of(tester.element(find.text('Appearance'))).brightness, Brightness.light);
         await tester.runAsync(() async {
           await tester.tap(find.text('Русский'));
           await store.flush();

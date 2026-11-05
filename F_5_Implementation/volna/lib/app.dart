@@ -7,6 +7,42 @@ import 'l10n/app_localizations.dart';
 class MusicApp extends StatelessWidget {
   const MusicApp({super.key, required this.controller});
   final AppController controller;
+  // Mist Blue uses tinted surfaces rather than a pure white background.
+  ThemeData _mistBlue() {
+    final scheme =
+        ColorScheme.fromSeed(
+          seedColor: const Color(0xFF28606A),
+          brightness: Brightness.light,
+        ).copyWith(
+          primary: const Color(0xFF28606A),
+          onPrimary: const Color(0xFFDEE6EC),
+          surface: const Color(0xFFDEE6EC),
+          onSurface: const Color(0xFF24343D),
+          onSurfaceVariant: const Color(0xFF4B606D),
+          surfaceContainerLow: const Color(0xFFD5E0E7),
+          surfaceContainer: const Color(0xFFCAD7E0),
+          surfaceContainerHigh: const Color(0xFFC4D3DE),
+          surfaceContainerHighest: const Color(0xFFBDCED9),
+        );
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: scheme,
+      scaffoldBackgroundColor: scheme.surface,
+      appBarTheme: AppBarTheme(
+        backgroundColor: scheme.surface,
+        foregroundColor: scheme.onSurface,
+        surfaceTintColor: Colors.transparent,
+      ),
+      navigationBarTheme: const NavigationBarThemeData(
+        backgroundColor: Color(0xFFCAD7E0),
+        indicatorColor: Color(0xFFB4CED4),
+      ),
+      inputDecorationTheme: const InputDecorationTheme(
+        border: OutlineInputBorder(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     const accent = Color(0xFFB5EE52);
@@ -18,7 +54,11 @@ class MusicApp extends StatelessWidget {
         supportedLocales: AppLocalizations.supportedLocales,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
+        themeMode: controller.settings.lightTheme
+            ? ThemeMode.light
+            : ThemeMode.dark,
+        theme: _mistBlue(),
+        darkTheme: ThemeData(
           useMaterial3: true,
           brightness: Brightness.dark,
           colorScheme: ColorScheme.fromSeed(

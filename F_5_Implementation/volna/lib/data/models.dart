@@ -18,22 +18,11 @@ class Track {
     this.artist = 'Unknown artist',
     this.album = '',
     this.durationMs = 0,
-    this.origin = 'import',
-    this.addedAt = 0,
+    this.isRadio = false,
   });
-  final String id, uri, title, artist, album, origin;
-  final int durationMs, addedAt;
-  bool get isRadio => origin == 'radio';
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'uri': uri,
-    'title': title,
-    'artist': artist,
-    'album': album,
-    'durationMs': durationMs,
-    'origin': origin,
-    'addedAt': addedAt,
-  };
+  final String id, uri, title, artist, album;
+  final int durationMs;
+  final bool isRadio;
   factory Track.fromJson(Map<String, dynamic> json) => Track(
     id: json['id'] as String,
     uri: json['uri'] as String,
@@ -41,29 +30,6 @@ class Track {
     artist: json['artist'] as String? ?? 'Unknown artist',
     album: json['album'] as String? ?? '',
     durationMs: (json['durationMs'] as num?)?.toInt() ?? 0,
-    origin: json['origin'] as String? ?? 'import',
-    addedAt: (json['addedAt'] as num?)?.toInt() ?? 0,
-  );
-}
-
-/// Read-only compatibility record for playlists saved by older releases.
-class SavedPlaylist {
-  SavedPlaylist({
-    required this.id,
-    required this.name,
-    Iterable<String> trackIds = const [],
-  }) : trackIds = List.unmodifiable(trackIds.toSet());
-  final String id, name;
-  final List<String> trackIds;
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'name': name,
-    'trackIds': trackIds,
-  };
-  factory SavedPlaylist.fromJson(Map<String, dynamic> json) => SavedPlaylist(
-    id: json['id'] as String,
-    name: json['name'] as String,
-    trackIds: (json['trackIds'] as List? ?? []).cast<String>(),
   );
 }
 

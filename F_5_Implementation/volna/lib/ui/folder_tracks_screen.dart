@@ -18,13 +18,6 @@ class FolderTracksScreen extends StatelessWidget {
   final String title;
   final List<Track> Function() tracks;
 
-  Future<void> _play(List<Track> queue, int index) async {
-    try {
-      await app.library.media.requestNotifications();
-    } catch (_) {}
-    await app.playback.playTracks(queue, startIndex: index);
-  }
-
   @override
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: Listenable.merge([app.library, app.playback]),
@@ -38,7 +31,7 @@ class FolderTracksScreen extends StatelessWidget {
               tooltip: context.l10n.play,
               onPressed: queue.isEmpty
                   ? null
-                  : () => unawaited(_play(queue, 0)),
+                  : () => unawaited(playFromList(context, app, queue, 0)),
               icon: const Icon(Icons.play_arrow),
             ),
           ],
@@ -72,15 +65,8 @@ class FolderTracksScreen extends StatelessWidget {
                         itemBuilder: (context, index) => TrackTile(
                           track: queue[index],
                           app: app,
-                          onTap: () => unawaited(_play(queue, index)),
-                          trailing: IconButton(
-                            tooltip: context.l10n.favorite,
-                            isSelected: app.library.isFavorite(queue[index].id),
-                            icon: const Icon(Icons.favorite_border),
-                            selectedIcon: const Icon(Icons.favorite),
-                            onPressed: () => unawaited(
-                              app.library.toggleFavorite(queue[index].id),
-                            ),
+                          onTap: () => unawaited(
+                            playFromList(context, app, queue, index),
                           ),
                         ),
                       ),

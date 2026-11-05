@@ -12,6 +12,7 @@ import 'fake_player.dart';
 
 class SelectedFolderMedia extends MediaLibrary {
   int pickerCalls = 0;
+  final scans = <String>[];
   MusicFolder? selection;
   @override
   Future<MusicFolder?> pickFolder() async {
@@ -20,29 +21,18 @@ class SelectedFolderMedia extends MediaLibrary {
   }
 
   final contents = <String, List<Track>>{
-    'root-a': [
-      const Track(
-        id: 'a',
-        uri: 'file:///a.mp3',
-        title: 'Only A',
-        origin: 'folder',
-      ),
-    ],
-    'root-b': [
-      const Track(
-        id: 'b',
-        uri: 'file:///b.mp3',
-        title: 'Only B',
-        origin: 'folder',
-      ),
-    ],
+    'root-a': [const Track(id: 'a', uri: 'file:///a.mp3', title: 'Only A')],
+    'root-b': [const Track(id: 'b', uri: 'file:///b.mp3', title: 'Only B')],
   };
   @override
   bool get supported => true;
   @override
   Future<void> requestNotifications() async {}
   @override
-  Future<List<Track>> scanFolder(String uri) async => contents[uri]!;
+  Future<List<Track>> scanFolder(String uri) async {
+    scans.add(uri);
+    return contents[uri]!;
+  }
 }
 
 void main() {
@@ -54,7 +44,6 @@ void main() {
     store = LibraryStore(directory: Future.value(root));
     media = SelectedFolderMedia();
     await store.write('library', {
-      'folderMode': true,
       'folders': [
         const MusicFolder(uri: 'root-a', name: 'Block N1').toJson(),
         const MusicFolder(uri: 'root-b', name: 'Block N2').toJson(),
@@ -140,57 +129,26 @@ void main() {
     expect(app.library.busy, isFalse);
     await tester.pumpAndSettle();
     expect(media.pickerCalls, 1);
+    expect(media.scans.where((uri) => uri == 'root-c'), hasLength(1));
     expect(find.text('New folder'), findsOneWidget);
+    // A manual refresh bypasses the add-folder snapshot and reads every root.
+    media.scans.clear();
+    media.contents['root-c'] = [
+      ...media.contents['root-a']!,
+      ...media.contents['root-b']!,
+    ];
+    media.contents['root-b'] = [];
+    await tester.tap(find.byTooltip('Refresh library'));
+    await tester.pumpAndSettle();
+    expect(media.scans, ['root-a', 'root-b', 'root-c']);
+    expect(find.text('2 tracks'), findsOneWidget);
+    await tester.tap(find.text('New folder'));
+    await tester.pumpAndSettle();
+    expect(find.text('Only A'), findsOneWidget);
+    expect(find.text('Only B'), findsOneWidget);
     expect(find.text('Create playlist'), findsNothing);
     expect(find.text('Add files'), findsNothing);
     expect(tester.takeException(), isNull);
-    await tester.pumpWidget(const SizedBox());
-    await tester.runAsync(app.dispose);
-  });
-
-  testWidgets('legacy playlists open read-only with preserved track order', (
-    tester,
-  ) async {
-    final app = AppController(
-      library: LibraryController(store: store, media: media),
-      playback: PlaybackController(player: FakePlayer()),
-    );
-    await tester.runAsync(() async {
-      await store.write('library', {
-        'tracks': [
-          const Track(
-            id: 'old:a',
-            uri: 'file:///a.mp3',
-            title: 'Legacy A',
-          ).toJson(),
-          const Track(
-            id: 'old:b',
-            uri: 'file:///b.mp3',
-            title: 'Legacy B',
-          ).toJson(),
-        ],
-        'playlists': [
-          SavedPlaylist(
-            id: 'old:list',
-            name: 'My saved list',
-            trackIds: ['old:b', 'old:a'],
-          ).toJson(),
-        ],
-      });
-      await app.initialize();
-    });
-    await tester.pumpWidget(MusicApp(controller: app));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Playlists').last);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('My saved list'));
-    await tester.pumpAndSettle();
-    expect(find.text('Legacy B'), findsOneWidget);
-    expect(find.byTooltip('Add tracks'), findsNothing);
-    expect(find.byTooltip('Playlist actions'), findsNothing);
-    await tester.tap(find.text('Legacy B'));
-    await tester.pumpAndSettle();
-    expect(app.playback.queue.map((e) => e.id), ['old:b', 'old:a']);
     await tester.pumpWidget(const SizedBox());
     await tester.runAsync(app.dispose);
   });

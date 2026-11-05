@@ -6,6 +6,19 @@ import 'track_artwork.dart';
 import '../l10n/strings.dart';
 import '../l10n/ui_message.dart';
 
+// Notification access is optional; a denied request must not block playback.
+Future<void> playFromList(
+  BuildContext context,
+  AppController app,
+  List<Track> tracks,
+  int index,
+) async {
+  try {
+    await app.library.media.requestNotifications();
+  } catch (_) {}
+  if (context.mounted) await app.playback.playTracks(tracks, startIndex: index);
+}
+
 class TrackTile extends StatelessWidget {
   const TrackTile({
     super.key,

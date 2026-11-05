@@ -1,23 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:html/parser.dart' as html;
 import 'models.dart';
 import '../l10n/ui_message.dart';
 
-/// Resolves public station links without executing website JavaScript.
+/// Accepts stream and playlist endpoints from the bundled radio catalog.
 class RadioResolver {
-  static Uri normalize(Uri uri) {
-    final host = uri.host.toLowerCase();
-    // Public Icecast endpoint referenced by the official marus.fm player.
-    if ((host == 'marus.fm' || host == 'www.marus.fm') &&
-        ['', '/', '/moscow', '/moscow/'].contains(uri.path)) {
-      return Uri.parse('https://cdn.radio-holding.ru/marusya_default');
-    }
-    return uri;
-  }
-
   Future<Uri> resolve(String input, {int depth = 0}) async {
-    final uri = normalize(parseAudioUrl(input));
+    final uri = parseAudioUrl(input);
     if (depth > 2) {
       throw const LocalizedException(UiMessage(MessageId.radioRedirects));
     }
@@ -42,9 +31,10 @@ class RadioResolver {
       }
       parseAudioUrl(base.toString());
       final mime = response.headers.contentType?.mimeType.toLowerCase() ?? '';
-      if (mime != 'text/html' &&
-          mime != 'application/xhtml+xml' &&
-          mime != 'audio/x-mpegurl' &&
+      if (mime == 'text/html' || mime == 'application/xhtml+xml') {
+        throw const LocalizedException(UiMessage(MessageId.radioWebsite));
+      }
+      if (mime != 'audio/x-mpegurl' &&
           mime != 'audio/mpegurl' &&
           mime != 'audio/x-scpls') {
         return base;
@@ -61,29 +51,16 @@ class RadioResolver {
       final body = utf8.decode(bytes, allowMalformed: true);
       if (body.contains('#EXT-X-')) return base;
       String? candidate;
-      if (mime.contains('html')) {
-        final document = html.parse(body);
-        candidate =
-            document
-                .querySelector('audio[src], audio source[src]')
-                ?.attributes['src'] ??
-            document
-                .querySelector(
-                  'meta[property="og:audio"], meta[property="og:audio:url"]',
-                )
-                ?.attributes['content'];
-      } else {
-        for (final line in const LineSplitter().convert(body)) {
-          final clean = line.trim();
-          if (clean.startsWith('#') || clean.isEmpty) continue;
-          if (clean.startsWith('http://') || clean.startsWith('https://')) {
-            candidate = clean;
-            break;
-          }
-          if (RegExp(r'^File\d+=', caseSensitive: false).hasMatch(clean)) {
-            candidate = clean.substring(clean.indexOf('=') + 1);
-            break;
-          }
+      for (final line in const LineSplitter().convert(body)) {
+        final clean = line.trim();
+        if (clean.startsWith('#') || clean.isEmpty) continue;
+        if (clean.startsWith('http://') || clean.startsWith('https://')) {
+          candidate = clean;
+          break;
+        }
+        if (RegExp(r'^File\d+=', caseSensitive: false).hasMatch(clean)) {
+          candidate = clean.substring(clean.indexOf('=') + 1);
+          break;
         }
       }
       if (candidate == null || candidate.trim().isEmpty) {

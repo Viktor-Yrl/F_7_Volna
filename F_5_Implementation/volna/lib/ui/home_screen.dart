@@ -41,14 +41,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     super.dispose();
   }
 
-  Future<void> _play(List<Track> tracks, int index) async {
-    try {
-      await app.library.media.requestNotifications();
-    } catch (_) {}
-    if (!mounted) return;
-    await app.playback.playTracks(tracks, startIndex: index);
-  }
-
   Widget _topTracks() {
     final tracks = app.library.topTracks;
     if (tracks.isEmpty) {
@@ -58,10 +50,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
+              Icon(
                 Icons.leaderboard_outlined,
                 size: 44,
-                color: Color(0xFFB5EE52),
+                color: Theme.of(context).colorScheme.primary,
               ),
               const SizedBox(height: 16),
               Text(
@@ -80,25 +72,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         return TrackTile(
           track: track,
           app: app,
-          onTap: () => unawaited(_play(tracks, index)),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                '${app.library.playCount(track.id)}',
-                style: const TextStyle(color: Color(0xFFB5EE52)),
-              ),
-              IconButton(
-                tooltip: app.library.isFavorite(track.id)
-                    ? context.l10n.removeFavorite
-                    : context.l10n.favorite,
-                isSelected: app.library.isFavorite(track.id),
-                icon: const Icon(Icons.favorite_border),
-                selectedIcon: const Icon(Icons.favorite),
-                onPressed: () =>
-                    unawaited(app.library.toggleFavorite(track.id)),
-              ),
-            ],
+          onTap: () => unawaited(playFromList(context, app, tracks, index)),
+          trailing: Builder(
+            builder: (context) => Text(
+              '${app.library.playCount(track.id)}',
+              style: TextStyle(color: Theme.of(context).colorScheme.primary),
+            ),
           ),
         );
       },
@@ -201,111 +180,50 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   // Folder-style entries expose selected document trees without copying audio.
   Widget _playlists() => ListView(
     children: [
-      for (final folder in app.library.folders)
-        _folderTile(
-          folder.name,
-          app.library.tracksForFolder(folder.uri).length,
-          () => Navigator.push(
-            context,
-            MaterialPageRoute<void>(
-              builder: (_) => FolderTracksScreen(
-                app: app,
-                title: folder.name,
-                tracks: () => app.library.tracksForFolder(folder.uri),
-              ),
-            ),
-          ),
-          trailing: PopupMenuButton<String>(
-            tooltip: context.l10n.musicFolders,
-            onSelected: (_) => unawaited(app.library.removeFolder(folder.uri)),
-            itemBuilder: (_) => [
-              PopupMenuItem(
-                value: 'remove',
-                child: Text(context.l10n.removeFolder),
-              ),
-            ],
-          ),
-        ),
-      if (app.library.savedFiles.isNotEmpty)
-        _folderTile(
-          context.l10n.savedFiles,
-          app.library.savedFiles.length,
-          () => Navigator.push(
-            context,
-            MaterialPageRoute<void>(
-              builder: (_) => FolderTracksScreen(
-                app: app,
-                title: context.l10n.savedFiles,
-                tracks: () => app.library.savedFiles,
-              ),
-            ),
-          ),
-        ),
-      if (app.library.retainedDeviceTracks.isNotEmpty)
-        _folderTile(
-          context.l10n.savedDeviceTracks,
-          app.library.retainedDeviceTracks.length,
-          () => Navigator.push(
-            context,
-            MaterialPageRoute<void>(
-              builder: (_) => FolderTracksScreen(
-                app: app,
-                title: context.l10n.savedDeviceTracks,
-                tracks: () => app.library.retainedDeviceTracks,
-              ),
-            ),
-          ),
-        ),
-      for (final list in app.library.savedPlaylists)
-        _folderTile(
-          list.name,
-          app.library.savedPlaylistTracks(list).length,
-          () => Navigator.push(
-            context,
-            MaterialPageRoute<void>(
-              builder: (_) => FolderTracksScreen(
-                app: app,
-                title: list.name,
-                tracks: () => app.library.savedPlaylistTracks(list),
-              ),
-            ),
-          ),
-        ),
-      if (app.library.folders.isEmpty &&
-          app.library.savedPlaylists.isEmpty &&
-          app.library.savedFiles.isEmpty &&
-          app.library.retainedDeviceTracks.isEmpty)
+      for (final folder in app.library.folders) _folderTile(folder),
+      if (app.library.folders.isEmpty && app.library.media.supported)
         Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
             children: [
               const SizedBox(height: 32),
-              if (app.library.media.supported)
-                FilledButton.icon(
-                  onPressed: app.library.busy
-                      ? null
-                      : () => unawaited(app.library.addFolder()),
-                  icon: const Icon(Icons.create_new_folder_outlined),
-                  label: Text(context.l10n.addFolder),
-                ),
+              FilledButton.icon(
+                onPressed: app.library.busy
+                    ? null
+                    : () => unawaited(app.library.addFolder()),
+                icon: const Icon(Icons.create_new_folder_outlined),
+                label: Text(context.l10n.addFolder),
+              ),
             ],
           ),
         ),
     ],
   );
 
-  Widget _folderTile(
-    String title,
-    int count,
-    VoidCallback onTap, {
-    Widget? trailing,
-  }) => ListTile(
+  Widget _folderTile(MusicFolder folder) => ListTile(
     contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
     leading: const Icon(Icons.folder, color: Color(0xFFFFB900), size: 44),
-    title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
-    subtitle: Text(context.l10n.trackCount(count)),
-    trailing: trailing ?? const Icon(Icons.chevron_right),
-    onTap: onTap,
+    title: Text(folder.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+    subtitle: Text(
+      context.l10n.trackCount(app.library.tracksForFolder(folder.uri).length),
+    ),
+    trailing: PopupMenuButton<String>(
+      tooltip: context.l10n.musicFolders,
+      onSelected: (_) => unawaited(app.library.removeFolder(folder.uri)),
+      itemBuilder: (_) => [
+        PopupMenuItem(value: 'remove', child: Text(context.l10n.removeFolder)),
+      ],
+    ),
+    onTap: () => Navigator.push(
+      context,
+      MaterialPageRoute<void>(
+        builder: (_) => FolderTracksScreen(
+          app: app,
+          title: folder.name,
+          tracks: () => app.library.tracksForFolder(folder.uri),
+        ),
+      ),
+    ),
   );
   Widget _radio() => ListView.builder(
     itemCount: app.library.stations.length,
@@ -314,7 +232,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       return TrackTile(
         track: station,
         app: app,
-        onTap: () => unawaited(_play([station], 0)),
+        onTap: () => unawaited(playFromList(context, app, [station], 0)),
       );
     },
   );

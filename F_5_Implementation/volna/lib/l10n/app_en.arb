@@ -1,6 +1,9 @@
 {
-  "savedDeviceTracks": "Saved device tracks",
+  "appearance": "Appearance",
+  "darkTheme": "Dark",
+  "lightTheme": "Light — Mist Blue",
   "@@locale": "en",
+  "folderCleanupFailed": "Could not release unused folder access. Refresh the folders to retry.",
   "playlists": "Playlists",
   "radio": "Radio",
   "top100": "Top 100",
@@ -11,8 +14,6 @@
   "musicFolders": "Music folders",
   "noTracksAvailable": "No available tracks",
   "noListeningHistory": "No listening history yet",
-  "removeFavorite": "Remove from favorites",
-  "favorite": "Add to favorites",
   "removeFolder": "Remove folder from library",
   "nowPlaying": "Now playing",
   "playbackQueue": "Playback queue",
@@ -34,7 +35,6 @@
   "mountainLake": "Mountain lake",
   "unknownArtist": "Unknown artist",
   "untitled": "Untitled",
-  "downloadedFile": "Downloaded file",
   "marusyaTitle": "Marusya FM",
   "europaTitle": "Europa Plus",
   "marusyaDescription": "Russia · Russian hits",
@@ -44,7 +44,7 @@
   "comedyUsDescription": "USA · Talk comedy",
   "invalidAudioUrl": "Enter a direct http:// or https:// URL without a username or password.",
   "libraryLoadFailed": "Could not load saved music. Try refreshing your folders.",
-  "libraryScanFailed": "Could not refresh the library. Check the Android music permission.",
+  "libraryScanFailed": "Could not refresh the library. Check access to your selected folders.",
   "folderOpenFailed": "Could not open this folder. Select an accessible music folder.",
   "saveFailed": "Could not save changes. Check available storage.",
   "corruptBackup": "A damaged settings file was preserved as a backup.",
@@ -57,7 +57,7 @@
   "radioRedirects": "Too many radio redirects. The station is unavailable.",
   "radioPageTooLarge": "The station returned an unexpected large web page.",
   "radioWebsite": "The station returned a website instead of an audio stream.",
-  "settingsSaveFailed": "Could not save the language. Your previous selection is unchanged.",
+  "settingsSaveFailed": "Could not save settings. Your previous selection is unchanged.",
   "trackCount": "{count, plural, =0{0 tracks} one{1 track} other{{count} tracks}}",
   "@trackCount": {
     "placeholders": {
@@ -89,6 +89,5 @@
         "type": "int"
       }
     }
-  },
-  "savedFiles": "Saved files"
+  }
 }

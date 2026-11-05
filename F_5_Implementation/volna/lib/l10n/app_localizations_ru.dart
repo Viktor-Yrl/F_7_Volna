@@ -9,7 +9,17 @@ class AppLocalizationsRu extends AppLocalizations {
   AppLocalizationsRu([String locale = 'ru']) : super(locale);
 
   @override
-  String get savedDeviceTracks => 'Сохранённые треки телефона';
+  String get appearance => 'Оформление';
+
+  @override
+  String get darkTheme => 'Тёмная';
+
+  @override
+  String get lightTheme => 'Светлая — Mist Blue';
+
+  @override
+  String get folderCleanupFailed =>
+      'Не удалось отозвать доступ к неиспользуемой папке. Обновите папки, чтобы повторить.';
 
   @override
   String get playlists => 'Плейлисты';
@@ -40,12 +50,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get noListeningHistory => 'Пока нет прослушиваний';
-
-  @override
-  String get removeFavorite => 'Убрать из избранного';
-
-  @override
-  String get favorite => 'В избранное';
 
   @override
   String get removeFolder => 'Убрать папку из медиатеки';
@@ -111,9 +115,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get untitled => 'Без названия';
 
   @override
-  String get downloadedFile => 'Загруженный файл';
-
-  @override
   String get marusyaTitle => 'Маруся FM';
 
   @override
@@ -144,7 +145,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get libraryScanFailed =>
-      'Не удалось обновить медиатеку. Проверьте разрешение на музыку в настройках Android.';
+      'Не удалось обновить медиатеку. Проверьте доступ к выбранным папкам.';
 
   @override
   String get folderOpenFailed =>
@@ -193,7 +194,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get settingsSaveFailed =>
-      'Не удалось сохранить язык. Предыдущий выбор не изменён.';
+      'Не удалось сохранить настройки. Предыдущий выбор не изменён.';
 
   @override
   String trackCount(int count) {
@@ -223,7 +224,4 @@ class AppLocalizationsRu extends AppLocalizations {
   String radioHttp(int status) {
     return 'Сервер радио ответил HTTP $status. Станция временно недоступна.';
   }
-
-  @override
-  String get savedFiles => 'Сохранённые файлы';
 }

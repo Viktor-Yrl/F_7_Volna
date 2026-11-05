@@ -30,8 +30,6 @@ extension TrackLabels on Track {
             '<unknown>',
           ].contains(artist)
           ? context.l10n.unknownArtist
-          : ['Downloaded file', 'Загруженный файл'].contains(artist)
-          ? context.l10n.downloadedFile
           : artist,
   };
 }

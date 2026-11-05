@@ -1,5 +1,28 @@
 # Verification - 2026-10-27
 
+## Folder-only library / 2026-11-05
+
+- 35 current tests passed; Flutter analysis reported no issues. Checks cover
+  a clean install, direct folder picking, manual refresh and a restart with
+  favorites, play counts, language, queue and playback position preserved.
+- A mixed snapshot test confirms that retired collection fields and unrelated
+  track IDs are ignored. Saving the library does not modify audio files.
+- This replaces earlier compatibility checks for single-file imports, manual
+  playlists, downloaded files, custom stations and device-wide MediaStore IDs.
+
+## Playback, folder refresh and radio checks / 2026-11-05
+
+- All 41 offline tests passed; Flutter analysis reported no issues. Tests
+  cover isolated position notifications, slider and mini-player progress,
+  reading a newly selected folder once, and refreshing all folders from the UI.
+- For a separate network smoke test, run
+  `flutter test --dart-define=CHECK_LIVE_RADIO=true test/radio_resolver_test.dart`.
+  The check resolves each catalog URL and reads from the stream or HLS playlist;
+  it does not verify Android decoding or audible playback.
+- BBC World Service, Comedy UK and 181.FM Comedy Club returned stream data or
+  a playlist. Marusya FM and Europa Plus timed out before HTTP from this
+  network; independent requests to both original addresses also timed out.
+
 ## Four-Tab Scope / 1.6.0 / 2026-11-01
 
 - Playlists retains its name and displays selected folders. The plus button

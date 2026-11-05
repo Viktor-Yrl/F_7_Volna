@@ -23,18 +23,14 @@ void main() {
       expect(() => parseAudioUrl(value), throwsFormatException);
     }
   });
-  test('Track JSON round trip and unique playlist order', () {
-    const track = Track(
-      id: '1',
-      uri: 'file:///one.mp3',
-      title: 'One',
-      durationMs: 61000,
-    );
-    expect(Track.fromJson(track.toJson()).title, 'One');
-    expect(
-      SavedPlaylist(id: 'p', name: 'List', trackIds: ['b', 'a', 'b']).trackIds,
-      ['b', 'a'],
-    );
+  test('folder metadata decodes without stored track records', () {
+    final track = Track.fromJson({
+      'id': 'folder:1',
+      'uri': 'content://one',
+      'title': 'One',
+    });
+    expect(track.title, 'One');
+    expect(track.isRadio, isFalse);
     expect(formatTime(const Duration(seconds: 3661)), '1:01:01');
   });
   group('Persistent library', () {
@@ -63,51 +59,6 @@ void main() {
       );
     });
     test(
-      'legacy files and read-only playlists survive restart unchanged',
-      () async {
-        final file = await File(
-          '${root.path}/original.mp3',
-        ).writeAsBytes([73, 68, 51]);
-        final track = Track(
-          id: 'import:old',
-          uri: file.uri.toString(),
-          title: 'Original',
-        );
-        final list = SavedPlaylist(
-          id: 'old:list',
-          name: 'Old list',
-          trackIds: [track.id],
-        );
-        await store.write('library', {
-          'tracks': [track.toJson()],
-          'playlists': [list.toJson()],
-        });
-        final library = LibraryController(store: store, media: FakeMedia());
-        await library.initialize();
-        await library.toggleFavorite(track.id);
-        final restored = LibraryController(store: store, media: FakeMedia());
-        await restored.initialize();
-        expect(restored.savedFiles.single.id, track.id);
-        expect(
-          restored
-              .savedPlaylistTracks(restored.savedPlaylists.single)
-              .single
-              .id,
-          track.id,
-        );
-        expect(restored.isFavorite(track.id), isTrue);
-        expect(() => restored.savedPlaylists.clear(), throwsUnsupportedError);
-        expect(
-          () => restored.savedPlaylists.single.trackIds.clear(),
-          throwsUnsupportedError,
-        );
-        expect((await store.read('library'))['playlists'], [list.toJson()]);
-        expect(await file.readAsBytes(), [73, 68, 51]);
-        library.dispose();
-        restored.dispose();
-      },
-    );
-    test(
       'fixed radio catalog available on first install and immutable',
       () async {
         final library = LibraryController(store: store, media: FakeMedia());
@@ -133,81 +84,6 @@ void main() {
           library.stations.map((e) => e.id),
         );
         restored.dispose();
-        library.dispose();
-      },
-    );
-    test(
-      'removing downloads preserves existing files and saved references',
-      () async {
-        final directory = await Directory('${root.path}/downloads').create();
-        final file = await File(
-          '${directory.path}/old.mp3',
-        ).writeAsBytes([73, 68, 51]);
-        final track = Track(
-          id: 'download:old.mp3',
-          uri: file.uri.toString(),
-          title: 'Saved song',
-          origin: 'download',
-        );
-        await store.write('library', {
-          'tracks': [track.toJson()],
-          'favorites': [track.id],
-          'playlists': [
-            SavedPlaylist(
-              id: 'saved',
-              name: 'Saved',
-              trackIds: [track.id],
-            ).toJson(),
-          ],
-          'playCounts': {track.id: 4},
-        });
-        final library = LibraryController(store: store, media: FakeMedia());
-        await library.initialize();
-        expect(library.savedFiles.single.id, track.id);
-        expect(library.savedFiles.single.origin, 'download');
-        expect(
-          library.savedPlaylistTracks(library.savedPlaylists.single).single.id,
-          track.id,
-        );
-        expect(library.isFavorite(track.id), isTrue);
-        expect(library.playCount(track.id), 4);
-        await library.save();
-        expect(await file.readAsBytes(), [73, 68, 51]);
-        final restored = LibraryController(store: store, media: FakeMedia());
-        await restored.initialize();
-        expect(restored.find(track.id)?.uri, file.uri.toString());
-        library.dispose();
-        restored.dispose();
-      },
-    );
-    test(
-      'upgrade hides custom stations but preserves archive and remaps known queue IDs',
-      () async {
-        const known = Track(
-          id: 'old:marus',
-          uri: 'https://marus.fm/',
-          title: 'My radio',
-          origin: 'radio',
-        );
-        const custom = Track(
-          id: 'old:custom',
-          uri: 'https://example.com/live',
-          title: 'Custom',
-          origin: 'radio',
-        );
-        await store.write('library', {
-          'stations': [known.toJson(), custom.toJson()],
-        });
-        final library = LibraryController(store: store, media: FakeMedia());
-        await library.initialize();
-        expect(library.stations, hasLength(5));
-        expect(library.find('old:custom'), isNull);
-        expect(library.find('old:marus')!.id, 'radio:marusya');
-        await library.save();
-        expect((await store.read('library'))['stations'], [
-          known.toJson(),
-          custom.toJson(),
-        ]);
         library.dispose();
       },
     );

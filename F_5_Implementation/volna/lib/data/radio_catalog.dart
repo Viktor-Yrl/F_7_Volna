@@ -17,14 +17,14 @@ class RadioCatalog {
       uri: 'https://cdn.radio-holding.ru/marusya_default',
       title: 'Marusya FM',
       artist: 'Russia · Russian hits',
-      origin: 'radio',
+      isRadio: true,
     ),
     Track(
       id: 'radio:europa-plus',
       uri: 'https://ep256.hostingradio.ru:8052/europaplus256.mp3',
       title: 'Europa Plus',
       artist: 'Russia · Pop music',
-      origin: 'radio',
+      isRadio: true,
     ),
     Track(
       id: 'radio:bbc-world-service',
@@ -32,36 +32,21 @@ class RadioCatalog {
           'https://a.files.bbci.co.uk/ms6/live/3441A116-B12E-4D2F-ACA8-C1984642FA4B/audio/simulcast/hls/nonuk/pc_hd_abr_v2/aks/bbc_world_service.m3u8',
       title: 'BBC World Service',
       artist: 'UK · International news',
-      origin: 'radio',
+      isRadio: true,
     ),
     Track(
       id: 'radio:comedy-uk',
       uri: 'https://stream.rcs.revma.com/cp7w38a8hxnwv',
       title: 'Comedy UK',
       artist: 'UK · British stand-up',
-      origin: 'radio',
+      isRadio: true,
     ),
     Track(
       id: 'radio:181-comedy-club',
       uri: 'https://listen.181fm.com/181-comedy_128k.mp3',
       title: '181.FM Comedy Club',
       artist: 'USA · Talk comedy',
-      origin: 'radio',
+      isRadio: true,
     ),
   ];
-
-  static Track? replacementFor(Track legacy) {
-    // Resolve only recognized legacy stations; custom entries remain archived.
-    final uri = Uri.tryParse(legacy.uri);
-    if (uri == null) return null;
-    final host = uri.host.toLowerCase();
-    if (['marus.fm', 'www.marus.fm'].contains(host) &&
-        ['', '/', '/moscow', '/moscow/'].contains(uri.path)) {
-      return stations[0];
-    }
-    for (final station in stations) {
-      if (station.uri == legacy.uri) return station;
-    }
-    return null;
-  }
 }

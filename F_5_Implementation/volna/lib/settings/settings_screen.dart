@@ -15,6 +15,35 @@ class SettingsScreen extends StatelessWidget {
   Widget _content(BuildContext context) => SafeArea(
     child: ListView(
       children: [
+        Padding(
+          padding: const EdgeInsets.all(20),
+          child: Text(
+            context.l10n.appearance,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+        ),
+        RadioGroup<bool>(
+          groupValue: settings.lightTheme,
+          onChanged: (value) {
+            if (value != null && !settings.saving) {
+              settings.setLightTheme(value);
+            }
+          },
+          child: Column(
+            children: [
+              RadioListTile<bool>(
+                title: Text(context.l10n.darkTheme),
+                value: false,
+                enabled: !settings.saving,
+              ),
+              RadioListTile<bool>(
+                title: Text(context.l10n.lightTheme),
+                value: true,
+                enabled: !settings.saving,
+              ),
+            ],
+          ),
+        ),
         if (settings.saving) const LinearProgressIndicator(),
         if (settings.error != null)
           ErrorBanner(message: settings.error!, onDismiss: settings.clearError),

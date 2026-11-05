@@ -9,7 +9,17 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get savedDeviceTracks => 'Saved device tracks';
+  String get appearance => 'Appearance';
+
+  @override
+  String get darkTheme => 'Dark';
+
+  @override
+  String get lightTheme => 'Light — Mist Blue';
+
+  @override
+  String get folderCleanupFailed =>
+      'Could not release unused folder access. Refresh the folders to retry.';
 
   @override
   String get playlists => 'Playlists';
@@ -40,12 +50,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noListeningHistory => 'No listening history yet';
-
-  @override
-  String get removeFavorite => 'Remove from favorites';
-
-  @override
-  String get favorite => 'Add to favorites';
 
   @override
   String get removeFolder => 'Remove folder from library';
@@ -111,9 +115,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get untitled => 'Untitled';
 
   @override
-  String get downloadedFile => 'Downloaded file';
-
-  @override
   String get marusyaTitle => 'Marusya FM';
 
   @override
@@ -144,7 +145,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get libraryScanFailed =>
-      'Could not refresh the library. Check the Android music permission.';
+      'Could not refresh the library. Check access to your selected folders.';
 
   @override
   String get folderOpenFailed =>
@@ -192,7 +193,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsSaveFailed =>
-      'Could not save the language. Your previous selection is unchanged.';
+      'Could not save settings. Your previous selection is unchanged.';
 
   @override
   String trackCount(int count) {
@@ -220,7 +221,4 @@ class AppLocalizationsEn extends AppLocalizations {
   String radioHttp(int status) {
     return 'Radio server returned HTTP $status. The station is temporarily unavailable.';
   }
-
-  @override
-  String get savedFiles => 'Saved files';
 }

@@ -98,11 +98,29 @@ abstract class AppLocalizations {
     Locale('ru'),
   ];
 
-  /// No description provided for @savedDeviceTracks.
+  /// No description provided for @appearance.
   ///
   /// In en, this message translates to:
-  /// **'Saved device tracks'**
-  String get savedDeviceTracks;
+  /// **'Appearance'**
+  String get appearance;
+
+  /// No description provided for @darkTheme.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get darkTheme;
+
+  /// No description provided for @lightTheme.
+  ///
+  /// In en, this message translates to:
+  /// **'Light — Mist Blue'**
+  String get lightTheme;
+
+  /// No description provided for @folderCleanupFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not release unused folder access. Refresh the folders to retry.'**
+  String get folderCleanupFailed;
 
   /// No description provided for @playlists.
   ///
@@ -163,18 +181,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No listening history yet'**
   String get noListeningHistory;
-
-  /// No description provided for @removeFavorite.
-  ///
-  /// In en, this message translates to:
-  /// **'Remove from favorites'**
-  String get removeFavorite;
-
-  /// No description provided for @favorite.
-  ///
-  /// In en, this message translates to:
-  /// **'Add to favorites'**
-  String get favorite;
 
   /// No description provided for @removeFolder.
   ///
@@ -302,12 +308,6 @@ abstract class AppLocalizations {
   /// **'Untitled'**
   String get untitled;
 
-  /// No description provided for @downloadedFile.
-  ///
-  /// In en, this message translates to:
-  /// **'Downloaded file'**
-  String get downloadedFile;
-
   /// No description provided for @marusyaTitle.
   ///
   /// In en, this message translates to:
@@ -365,7 +365,7 @@ abstract class AppLocalizations {
   /// No description provided for @libraryScanFailed.
   ///
   /// In en, this message translates to:
-  /// **'Could not refresh the library. Check the Android music permission.'**
+  /// **'Could not refresh the library. Check access to your selected folders.'**
   String get libraryScanFailed;
 
   /// No description provided for @folderOpenFailed.
@@ -443,7 +443,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsSaveFailed.
   ///
   /// In en, this message translates to:
-  /// **'Could not save the language. Your previous selection is unchanged.'**
+  /// **'Could not save settings. Your previous selection is unchanged.'**
   String get settingsSaveFailed;
 
   /// No description provided for @trackCount.
@@ -469,12 +469,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Radio server returned HTTP {status}. The station is temporarily unavailable.'**
   String radioHttp(int status);
-
-  /// No description provided for @savedFiles.
-  ///
-  /// In en, this message translates to:
-  /// **'Saved files'**
-  String get savedFiles;
 }
 
 class _AppLocalizationsDelegate

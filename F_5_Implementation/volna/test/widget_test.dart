@@ -14,6 +14,10 @@ import 'fake_player.dart';
 class OfflineMedia extends MediaLibrary {
   @override
   bool get supported => false;
+  @override
+  Future<List<Track>> scanFolder(String uri) async => [
+    const Track(id: 'folder:one', uri: 'content://one', title: 'Local song'),
+  ];
 }
 
 // Keep popup interaction tests independent of FakeAsync filesystem callbacks.
@@ -31,12 +35,13 @@ class MemoryLibraryStore extends LibraryStore {
 void main() {
   late Directory root;
   late AppController app;
+  late FakePlayer native;
   setUp(() async {
     root = await Directory.systemTemp.createTemp('music_widget_test_');
     final store = LibraryStore(directory: Future.value(root));
     app = AppController(
       library: LibraryController(store: store, media: OfflineMedia()),
-      playback: PlaybackController(player: FakePlayer()),
+      playback: PlaybackController(player: native = FakePlayer()),
     );
   });
   tearDown(() async {
@@ -81,6 +86,16 @@ void main() {
       ], autoplay: false);
       await tester.pumpAndSettle();
       expect(find.byTooltip('Previous track'), findsOneWidget);
+      native.positions.add(const Duration(seconds: 12));
+      await tester.pump();
+      expect(
+        tester
+            .widget<LinearProgressIndicator>(
+              find.byType(LinearProgressIndicator),
+            )
+            .value,
+        .2,
+      );
       await tester.tap(find.text('Top 100').last);
       await tester.pumpAndSettle();
       expect(find.text('No listening history yet'), findsOneWidget);
@@ -93,14 +108,16 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.byType(Slider), findsOneWidget);
+      native.positions.add(const Duration(seconds: 15));
+      await tester.pump();
+      expect(find.text('0:15'), findsOneWidget);
+      expect(tester.widget<Slider>(find.byType(Slider)).value, 15000);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
       await tester.runAsync(app.dispose);
     });
   }
-  testWidgets('ranking retains favorites without playlist editing', (
-    tester,
-  ) async {
+  testWidgets('ranking retains play counts without favorites', (tester) async {
     await tester.runAsync(app.dispose);
     await tester.runAsync(() async {
       final store = MemoryLibraryStore(root);
@@ -108,56 +125,28 @@ void main() {
         library: LibraryController(store: store, media: OfflineMedia()),
         playback: PlaybackController(player: FakePlayer()),
       );
-      const track = Track(
-        id: 'import:old',
-        uri: 'file:///old.mp3',
-        title: 'Local song',
-      );
       await store.write('library', {
-        'tracks': [track.toJson()],
+        'folders': [
+          {'uri': 'tree:music', 'name': 'Music'},
+        ],
       });
       await app.initialize();
-      await app.library.recordPlay(track);
+      await app.library.recordPlay(app.library.tracks.single);
     });
-    final track = app.library.savedFiles.single;
     await tester.pumpWidget(MusicApp(controller: app));
     await tester.pumpAndSettle();
     expect(find.text('Local song'), findsOneWidget);
-    await tester.tap(find.byTooltip('Add to favorites'));
-    await tester.pumpAndSettle();
-    expect(app.library.isFavorite(track.id), isTrue);
-    expect(find.byTooltip('Remove from favorites'), findsOneWidget);
+    for (final light in [false, true]) {
+      await tester.runAsync(() => app.settings.setLightTheme(light));
+      await tester.pumpAndSettle();
+      final count = find.text('1');
+      final scheme = Theme.of(tester.element(count)).colorScheme;
+      expect(tester.widget<Text>(count).style?.color, scheme.primary);
+      expect(scheme.brightness, light ? Brightness.light : Brightness.dark);
+    }
+    expect(find.byIcon(Icons.favorite_border), findsNothing);
+    expect(find.byIcon(Icons.favorite), findsNothing);
     expect(find.text('Add to playlist'), findsNothing);
-    expect(tester.takeException(), isNull);
-    await tester.pumpWidget(const SizedBox());
-    await tester.runAsync(app.dispose);
-  });
-
-  testWidgets('previously downloaded tracks remain accessible and playable', (
-    tester,
-  ) async {
-    const track = Track(
-      id: 'download:old',
-      uri: 'file:///old.mp3',
-      title: 'Previously saved song',
-      origin: 'download',
-    );
-    await tester.runAsync(() async {
-      await app.store.write('library', {
-        'tracks': [track.toJson()],
-      });
-      await app.initialize();
-    });
-    await tester.pumpWidget(MusicApp(controller: app));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Playlists').last);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Saved files'));
-    await tester.pumpAndSettle();
-    expect(find.text(track.title), findsOneWidget);
-    await tester.tap(find.text(track.title));
-    await tester.pumpAndSettle();
-    expect(app.playback.current?.id, track.id);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
     await tester.runAsync(app.dispose);

@@ -26,7 +26,7 @@ class PlaybackController extends ChangeNotifier {
         buffering =
             state.processingState == ProcessingState.buffering ||
             state.processingState == ProcessingState.loading;
-        if (completed && duration > Duration.zero) position = duration;
+        if (completed && duration > Duration.zero) _position.value = duration;
         _listening.sample(
           current,
           position,
@@ -43,8 +43,7 @@ class PlaybackController extends ChangeNotifier {
             duration,
             active: playing && !buffering && !busy && !_command,
           );
-          position = value;
-          _notify();
+          _position.value = value;
         }
       }),
       _player.durationStream.listen((value) {
@@ -76,6 +75,9 @@ class PlaybackController extends ChangeNotifier {
   final RadioResolver _radioResolver;
   final _artwork = RadioArtworkCache();
   void Function(Track)? onQualifiedPlay;
+  void Function(List<Track>)? onQueueChanged;
+  bool _hasQueueIntent = false;
+  bool get hasQueueIntent => _hasQueueIntent;
   late final _listening = ListeningTracker(
     (track) => onQualifiedPlay?.call(track),
   );
@@ -90,7 +92,11 @@ class PlaybackController extends ChangeNotifier {
   bool playing = false, completed = false, buffering = false, busy = false;
   bool shuffle = false;
   LoopMode repeat = LoopMode.off;
-  Duration position = Duration.zero, duration = Duration.zero;
+  // Position ticks update progress views and checkpoints, not track lists.
+  final _position = ValueNotifier(Duration.zero);
+  ValueListenable<Duration> get progress => _position;
+  Duration get position => _position.value;
+  Duration duration = Duration.zero;
   UiMessage? error;
   bool get canSeek =>
       current != null &&
@@ -118,6 +124,9 @@ class PlaybackController extends ChangeNotifier {
     if (_disposed || busy || tracks.isEmpty) return;
     // A later stop/load invalidates pending async work from this generation.
     final generation = ++_generation;
+    // Commands from the previous queue no longer own the transport lock.
+    _command = false;
+    _hasQueueIntent = true;
     busy = true;
     error = null;
     _notify();
@@ -125,9 +134,10 @@ class PlaybackController extends ChangeNotifier {
       await _player.stop();
       if (_disposed || generation != _generation) return;
       _queue = List.of(tracks);
+      onQueueChanged?.call(_queue);
       _listening.reset();
       index = startIndex.clamp(0, tracks.length - 1);
-      position = tracks[index].isRadio ? Duration.zero : initialPosition;
+      _position.value = tracks[index].isRadio ? Duration.zero : initialPosition;
       duration = Duration(milliseconds: tracks[index].durationMs);
       completed = false;
       _notify();
@@ -220,9 +230,8 @@ class PlaybackController extends ChangeNotifier {
       await playTracks(_queue, startIndex: index);
       return;
     }
-    _command = true;
-    _notify();
-    try {
+    final generation = _generation;
+    await _safe(() async {
       if (playing) {
         await _player.pause();
       } else {
@@ -230,14 +239,9 @@ class PlaybackController extends ChangeNotifier {
           _listening.reset();
           await _player.seek(Duration.zero);
         }
-        if (!_disposed) unawaited(_play());
+        if (!_disposed && generation == _generation) unawaited(_play());
       }
-    } catch (_) {
-      error = const UiMessage(MessageId.toggleFailed);
-    } finally {
-      _command = false;
-      _notify();
-    }
+    }, failure: MessageId.toggleFailed);
   }
 
   Future<void> seek(Duration value) async {
@@ -284,9 +288,12 @@ class PlaybackController extends ChangeNotifier {
   }
 
   Future<void> setShuffle(bool value) async {
+    final generation = _generation;
     final success = await _safe(() async {
       await _player.setShuffleModeEnabled(current?.isRadio != true && value);
-      if (value) await _player.shuffle();
+      if (value && !_disposed && generation == _generation) {
+        await _player.shuffle();
+      }
     });
     if (success) shuffle = value;
     _notify();
@@ -306,9 +313,11 @@ class PlaybackController extends ChangeNotifier {
     }
     if (_disposed || generation != _generation) return;
     if (clearQueue) {
+      _hasQueueIntent = true;
       _queue = [];
+      onQueueChanged?.call(_queue);
       index = 0;
-      position = Duration.zero;
+      _position.value = Duration.zero;
       duration = Duration.zero;
     }
     playing = false;
@@ -318,7 +327,10 @@ class PlaybackController extends ChangeNotifier {
     _notify();
   }
 
-  Future<bool> _safe(Future<void> Function() action) async {
+  Future<bool> _safe(
+    Future<void> Function() action, {
+    MessageId failure = MessageId.playerCommandFailed,
+  }) async {
     // Serialize transport commands and ignore results from superseded loads.
     if (_disposed || busy || _command) return false;
     final generation = _generation;
@@ -330,7 +342,7 @@ class PlaybackController extends ChangeNotifier {
       return !_disposed && generation == _generation;
     } catch (_) {
       if (!_disposed && generation == _generation) {
-        error = const UiMessage(MessageId.playerCommandFailed);
+        error = UiMessage(failure);
       }
       return false;
     } finally {
@@ -355,6 +367,7 @@ class PlaybackController extends ChangeNotifier {
       unawaited(subscription.cancel());
     }
     unawaited(_player.dispose());
+    _position.dispose();
     super.dispose();
   }
 }

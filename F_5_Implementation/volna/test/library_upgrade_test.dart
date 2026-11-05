@@ -1,123 +1,111 @@
 import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:music_player_full/app_controller.dart';
 import 'package:music_player_full/data/library_store.dart';
 import 'package:music_player_full/data/media_library.dart';
 import 'package:music_player_full/data/models.dart';
 import 'package:music_player_full/library/library_controller.dart';
+import 'package:music_player_full/player/playback_controller.dart';
+import 'fake_player.dart';
 
-class UpgradeMedia extends MediaLibrary {
-  final queries = <List<String>>[];
-  bool readable = true;
+class _SelectedMedia extends MediaLibrary {
+  int scans = 0;
   @override
-  Future<List<Track>> restoreLegacyTracks(List<String> ids) async {
-    queries.add(List.of(ids));
-    if (!readable) return [];
-    return ids
-        .map(
-          (id) => Track(
-            id: id,
-            uri: 'content://media/external/audio/media/${id.split(':').last}',
-            title: id,
-            origin: 'device',
-          ),
-        )
-        .toList();
+  Future<List<Track>> scanFolder(String uri) async {
+    scans++;
+    expect(uri, 'tree:music');
+    return [const Track(id: 'folder:one', uri: 'content://one', title: 'Song')];
   }
 }
 
 void main() {
   late Directory root;
   late LibraryStore store;
-  late UpgradeMedia media;
+  late _SelectedMedia media;
+  AppController open() => AppController(
+    library: LibraryController(store: store, media: media),
+    playback: PlaybackController(player: FakePlayer()),
+  );
   setUp(() async {
-    root = await Directory.systemTemp.createTemp('volna_upgrade_');
+    root = await Directory.systemTemp.createTemp('volna_folders_only_');
     store = LibraryStore(directory: Future.value(root));
-    media = UpgradeMedia();
-    await store.write('library', {
-      'version': 1,
-      'folderMode': false,
-      'playlists': [
-        SavedPlaylist(
-          id: 'p',
-          name: 'My songs',
-          trackIds: ['media:1', 'media:2'],
-        ).toJson(),
-      ],
-      'favorites': ['media:1'],
-      'playCounts': {'media:2': 7},
-    });
-    await store.write('playback', {
-      'ids': ['media:3'],
-      'currentId': 'media:3',
-      'positionMs': 1234,
-    });
-    await store.write('settings', {'language': 'ru'});
+    media = _SelectedMedia();
   });
   tearDown(() async {
     await store.flush();
     await root.delete(recursive: true);
   });
 
-  test(
-    'upgrade resolves only referenced IDs and preserves user data',
-    () async {
-      final library = LibraryController(store: store, media: media);
-      await library.initialize();
-      expect(media.queries.single.toSet(), {'media:1', 'media:2', 'media:3'});
-      expect(
-        library
-            .savedPlaylistTracks(library.savedPlaylists.single)
-            .map((e) => e.id),
-        ['media:1', 'media:2'],
-      );
-      expect(library.isFavorite('media:1'), isTrue);
-      expect(library.topTracks.single.id, 'media:2');
-      expect(library.playCount('media:2'), 7);
-      expect(library.retainedDeviceTracks.length, 3);
-      final snapshot = await store.read('library');
-      expect(snapshot['version'], 2);
-      expect(snapshot.containsKey('folderMode'), isFalse);
-      expect((await store.read('playback'))['positionMs'], 1234);
-      expect((await store.read('settings'))['language'], 'ru');
-      library.dispose();
+  test('clean install has no local music until a folder is selected', () async {
+    final app = open();
+    await app.initialize();
+    expect(app.library.folders, isEmpty);
+    expect(app.library.tracks, isEmpty);
+    expect(app.library.topTracks, isEmpty);
+    expect(app.playback.queue, isEmpty);
+    expect(media.scans, 0);
+    expect(app.library.stations, hasLength(5));
+    await app.dispose();
+  });
 
-      final restored = LibraryController(store: store, media: media);
-      await restored.initialize();
-      expect(media.queries.length, 1);
-      expect(restored.find('media:3'), isNotNull);
-      expect(restored.savedPlaylists.single.name, 'My songs');
-      restored.dispose();
-    },
-  );
+  test('only folder and catalog references survive a mixed snapshot', () async {
+    const id = 'folder:one';
+    final original = await File(
+      '${root.path}/original.mp3',
+    ).writeAsBytes([73, 68, 51]);
+    await store.write('library', {
+      'folders': [
+        {'uri': 'tree:music', 'name': 'Music'},
+      ],
+      'tracks': [
+        {'id': 'import:old', 'uri': original.uri.toString()},
+      ],
+      'playlists': [
+        {
+          'name': 'Old mix',
+          'trackIds': ['import:old'],
+        },
+      ],
+      'retainedDeviceTracks': [
+        {'id': 'media:1'},
+      ],
+      'stations': [
+        {'id': 'old:radio'},
+      ],
+      'favorites': [id, 'import:old'],
+      'playCounts': {id: 4, 'media:1': 11},
+    });
+    await store.write('playback', {
+      'ids': ['import:old', id, 'media:1'],
+      'currentId': id,
+      'positionMs': 1234,
+    });
+    await store.write('settings', {'language': 'ru'});
+    final app = open();
+    await app.initialize();
+    expect(app.library.topTracks.single.id, id);
+    expect(app.library.find('old:radio'), isNull);
+    expect(app.library.find('radio:marusya')?.isRadio, isTrue);
+    expect(app.playback.queue.map((e) => e.id), [id]);
+    expect(app.playback.position.inMilliseconds, 1234);
+    expect(app.settings.languageCode, 'ru');
+    await app.library.recordPlay(app.library.tracks.single);
+    await app.dispose();
 
-  test(
-    'missing permission preserves unresolved references for a later retry',
-    () async {
-      media.readable = false;
-      final library = LibraryController(store: store, media: media);
-      await library.initialize();
-      await library.save();
-      expect(library.retainedDeviceTracks, isEmpty);
-      expect(library.savedPlaylists.single.trackIds, ['media:1', 'media:2']);
-      expect(library.isFavorite('media:1'), isTrue);
-      expect(library.playCount('media:2'), 7);
-      library.dispose();
-      media.readable = true;
-      final restored = LibraryController(store: store, media: media);
-      await restored.initialize();
-      expect(restored.retainedDeviceTracks.length, 3);
-      expect(restored.playCount('media:2'), 7);
-      restored.dispose();
-    },
-  );
+    final data = await store.read('library');
+    expect(data.keys, unorderedEquals(['version', 'folders', 'playCounts']));
+    expect(data['playCounts'], {id: 5});
+    expect(await original.readAsBytes(), [73, 68, 51]);
 
-  test('new install never queries the device-wide media database', () async {
-    await store.write('library', {});
-    await store.write('playback', {});
-    final library = LibraryController(store: store, media: media);
-    await library.initialize();
-    expect(media.queries, isEmpty);
-    expect(library.folders, isEmpty);
-    library.dispose();
+    final restarted = open();
+    await restarted.initialize();
+    expect(restarted.library.folders.single.name, 'Music');
+    expect(restarted.library.topTracks.single.id, id);
+    expect(restarted.playback.current?.id, id);
+    expect(restarted.playback.position.inMilliseconds, 1234);
+    expect(restarted.playback.playing, isFalse);
+    expect(restarted.settings.languageCode, 'ru');
+    await restarted.dispose();
   });
 }
