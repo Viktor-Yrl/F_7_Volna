@@ -64,9 +64,19 @@ void main() {
       expect(find.text('Top 100'), findsWidgets);
       await tester.tap(find.text('Radio').last);
       await tester.pumpAndSettle();
-      expect(find.text('Marusya FM'), findsOneWidget);
-      expect(find.text('Europa Plus'), findsOneWidget);
       expect(find.text('BBC World Service'), findsOneWidget);
+      // The catalog is longer than a phone viewport; verify its entire scroll.
+      for (final station in app.library.stations) {
+        await tester.scrollUntilVisible(
+          find.text(station.title),
+          160,
+          scrollable: find.byType(Scrollable),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text(station.title), findsOneWidget);
+        expect(find.text(station.artist), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      }
       expect(find.byTooltip('Добавить радио'), findsNothing);
       expect(find.byTooltip('Действия со станцией'), findsNothing);
       expect(find.byType(PopupMenuButton<String>), findsNothing);

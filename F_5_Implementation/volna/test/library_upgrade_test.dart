@@ -45,7 +45,7 @@ void main() {
     expect(app.library.topTracks, isEmpty);
     expect(app.playback.queue, isEmpty);
     expect(media.scans, 0);
-    expect(app.library.stations, hasLength(5));
+    expect(app.library.stations, hasLength(12));
     await app.dispose();
   });
 

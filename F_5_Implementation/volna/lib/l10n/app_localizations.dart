@@ -350,6 +350,66 @@ abstract class AppLocalizations {
   /// **'USA · Talk comedy'**
   String get comedyUsDescription;
 
+  /// No description provided for @capitalDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'UK · Current pop hits'**
+  String get capitalDescription;
+
+  /// No description provided for @heartDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'UK · Popular hits'**
+  String get heartDescription;
+
+  /// No description provided for @lbcDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'UK · News and talk'**
+  String get lbcDescription;
+
+  /// No description provided for @wburDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'USA · News and NPR programs'**
+  String get wburDescription;
+
+  /// No description provided for @retroTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Retro FM'**
+  String get retroTitle;
+
+  /// No description provided for @shansonTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Radio Shanson'**
+  String get shansonTitle;
+
+  /// No description provided for @humorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Humor FM'**
+  String get humorTitle;
+
+  /// No description provided for @retroDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Russia · Classic hits'**
+  String get retroDescription;
+
+  /// No description provided for @shansonDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Russia · Russian chanson'**
+  String get shansonDescription;
+
+  /// No description provided for @humorDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Russia · Comedy and music'**
+  String get humorDescription;
+
   /// No description provided for @invalidAudioUrl.
   ///
   /// In en, this message translates to:

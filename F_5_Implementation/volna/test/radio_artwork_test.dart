@@ -19,7 +19,11 @@ void main() {
   testWidgets(
     'every bundled station logo decodes and renders without cropping',
     (tester) async {
-      expect(RadioCatalog.stations, hasLength(5));
+      expect(RadioCatalog.stations, hasLength(12));
+      expect(
+        RadioCatalog.logos.keys.toSet(),
+        RadioCatalog.stations.map((station) => station.id).toSet(),
+      );
       for (final station in RadioCatalog.stations) {
         final path = RadioCatalog.logos[station.id];
         expect(path, isNotNull);

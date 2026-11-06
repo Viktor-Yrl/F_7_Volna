@@ -136,6 +136,36 @@ class AppLocalizationsRu extends AppLocalizations {
   String get comedyUsDescription => 'США · Разговорный юмор';
 
   @override
+  String get capitalDescription => 'Великобритания · Современные поп-хиты';
+
+  @override
+  String get heartDescription => 'Великобритания · Популярные хиты';
+
+  @override
+  String get lbcDescription => 'Великобритания · Новости и обсуждения';
+
+  @override
+  String get wburDescription => 'США · Новости и программы NPR';
+
+  @override
+  String get retroTitle => 'Ретро FM';
+
+  @override
+  String get shansonTitle => 'Радио Шансон';
+
+  @override
+  String get humorTitle => 'Юмор FM';
+
+  @override
+  String get retroDescription => 'Россия · Хиты прошлых лет';
+
+  @override
+  String get shansonDescription => 'Россия · Русский шансон';
+
+  @override
+  String get humorDescription => 'Россия · Юмор и музыка';
+
+  @override
   String get invalidAudioUrl =>
       'Введите прямую ссылку http:// или https:// без логина и пароля.';
 

@@ -136,6 +136,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get comedyUsDescription => 'USA · Talk comedy';
 
   @override
+  String get capitalDescription => 'UK · Current pop hits';
+
+  @override
+  String get heartDescription => 'UK · Popular hits';
+
+  @override
+  String get lbcDescription => 'UK · News and talk';
+
+  @override
+  String get wburDescription => 'USA · News and NPR programs';
+
+  @override
+  String get retroTitle => 'Retro FM';
+
+  @override
+  String get shansonTitle => 'Radio Shanson';
+
+  @override
+  String get humorTitle => 'Humor FM';
+
+  @override
+  String get retroDescription => 'Russia · Classic hits';
+
+  @override
+  String get shansonDescription => 'Russia · Russian chanson';
+
+  @override
+  String get humorDescription => 'Russia · Comedy and music';
+
+  @override
   String get invalidAudioUrl =>
       'Enter a direct http:// or https:// URL without a username or password.';
 

@@ -13,6 +13,9 @@ extension TrackLabels on Track {
   String titleLabel(BuildContext context) => switch (id) {
     'radio:marusya' => context.l10n.marusyaTitle,
     'radio:europa-plus' => context.l10n.europaTitle,
+    'radio:retro-fm' => context.l10n.retroTitle,
+    'radio:shanson' => context.l10n.shansonTitle,
+    'radio:humor-fm' => context.l10n.humorTitle,
     _ =>
       title.isEmpty || title == 'Без названия' ? context.l10n.untitled : title,
   };
@@ -22,6 +25,13 @@ extension TrackLabels on Track {
     'radio:bbc-world-service' => context.l10n.bbcDescription,
     'radio:comedy-uk' => context.l10n.comedyUkDescription,
     'radio:181-comedy-club' => context.l10n.comedyUsDescription,
+    'radio:capital' => context.l10n.capitalDescription,
+    'radio:heart' => context.l10n.heartDescription,
+    'radio:lbc' => context.l10n.lbcDescription,
+    'radio:wbur' => context.l10n.wburDescription,
+    'radio:retro-fm' => context.l10n.retroDescription,
+    'radio:shanson' => context.l10n.shansonDescription,
+    'radio:humor-fm' => context.l10n.humorDescription,
     _ =>
       [
             '',

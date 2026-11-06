@@ -6,11 +6,14 @@ import 'package:music_player_full/app_controller.dart';
 import 'package:music_player_full/data/library_store.dart';
 import 'package:music_player_full/data/media_library.dart';
 import 'package:music_player_full/data/models.dart';
+import 'package:music_player_full/data/radio_catalog.dart';
 import 'package:music_player_full/library/library_controller.dart';
 import 'package:music_player_full/player/playback_controller.dart';
 import 'package:music_player_full/settings/app_settings.dart';
 import 'package:music_player_full/l10n/app_localizations_en.dart';
+import 'package:music_player_full/l10n/app_localizations.dart';
 import 'package:music_player_full/l10n/app_localizations_ru.dart';
+import 'package:music_player_full/l10n/strings.dart';
 import 'package:music_player_full/l10n/ui_message.dart';
 import 'fake_player.dart';
 
@@ -92,6 +95,54 @@ void main() {
     },
   );
 
+  testWidgets('radio labels translate countries and Russian station names', (
+    tester,
+  ) async {
+    for (final code in ['en', 'ru']) {
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: Locale(code),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const Scaffold(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final context = tester.element(find.byType(Scaffold));
+      for (final station in RadioCatalog.stations) {
+        final country = station.artist.split(' · ').first;
+        final translatedCountry = code == 'en'
+            ? country
+            : switch (country) {
+                'UK' => 'Великобритания',
+                'USA' => 'США',
+                _ => 'Россия',
+              };
+        expect(
+          station.artistLabel(context),
+          startsWith('$translatedCountry · '),
+        );
+        expect(station.titleLabel(context), isNotEmpty);
+      }
+      final retro = RadioCatalog.stations.singleWhere(
+        (station) => station.id == 'radio:retro-fm',
+      );
+      final shanson = RadioCatalog.stations.singleWhere(
+        (station) => station.id == 'radio:shanson',
+      );
+      final humor = RadioCatalog.stations.singleWhere(
+        (station) => station.id == 'radio:humor-fm',
+      );
+      expect(retro.titleLabel(context), code == 'en' ? 'Retro FM' : 'Ретро FM');
+      expect(
+        shanson.titleLabel(context),
+        code == 'en' ? 'Radio Shanson' : 'Радио Шансон',
+      );
+      expect(humor.titleLabel(context), code == 'en' ? 'Humor FM' : 'Юмор FM');
+    }
+    expect(tester.takeException(), isNull);
+  });
+
   for (final size in [
     const Size(320, 640),
     const Size(412, 915),
@@ -126,7 +177,10 @@ void main() {
           await store.flush();
         });
         await tester.pumpAndSettle();
-        expect(Theme.of(tester.element(find.text('Appearance'))).brightness, Brightness.light);
+        expect(
+          Theme.of(tester.element(find.text('Appearance'))).brightness,
+          Brightness.light,
+        );
         await tester.runAsync(() async {
           await tester.tap(find.text('Русский'));
           await store.flush();

@@ -64,17 +64,33 @@ void main() {
         final library = LibraryController(store: store, media: FakeMedia());
         await library.initialize();
         expect(library.stations.map((e) => e.title), [
-          'Marusya FM',
-          'Europa Plus',
           'BBC World Service',
           'Comedy UK',
           '181.FM Comedy Club',
+          'Capital',
+          'Heart',
+          'LBC',
+          'WBUR',
+          'Marusya FM',
+          'Europa Plus',
+          'Retro FM',
+          'Radio Shanson',
+          'Humor FM',
         ]);
         expect(library.stations.every((e) => e.isRadio), isTrue);
-        expect(library.stations.map((e) => e.id).toSet(), hasLength(5));
+        expect(library.stations.map((e) => e.id).toSet(), hasLength(12));
+        expect(
+          library.stations.take(7).every((e) => !e.artist.startsWith('Russia')),
+          isTrue,
+        );
+        expect(
+          library.stations.skip(7).every((e) => e.artist.startsWith('Russia')),
+          isTrue,
+        );
         expect(() => library.stations.clear(), throwsUnsupportedError);
         for (final station in library.stations) {
           expect(library.find(station.id), same(station));
+          expect(parseAudioUrl(station.uri).scheme, 'https');
         }
         await library.save();
         final restored = LibraryController(store: store, media: FakeMedia());
