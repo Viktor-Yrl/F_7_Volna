@@ -3,7 +3,12 @@
 [Русская версия](README.ru.md)
 
 Android music player built with Flutter. Version 1.6.0+11.
-The sibling `music_player` MVP is a separate project and is not modified.
+The maintained application is in `F_5_Implementation/volna`; no separate MVP
+application directory is present in the current checkout.
+
+[Download Android ARM64 preview](https://github.com/Viktor-Yrl/F_7_Volna/releases/download/v1.6.0/Volna-1.6.0-android-arm64.apk)
+or view the [v1.6.0 release](https://github.com/Viktor-Yrl/F_7_Volna/releases/tag/v1.6.0).
+The published APK requires Android 7.0 / API 24 or newer and an ARM64 device.
 
 ## Scope
 
@@ -82,7 +87,7 @@ lib/
   data/                   Models, JSON persistence and native media bridge
   library/                Selected folders and listening statistics
   player/                 Playback controller, full player and mini player
-  settings/               Language preference and settings tab
+  settings/               Language/theme preferences and settings tab
   l10n/                   ARB translations and generated localization classes
   ui/                     Main navigation, folder views and shared track widgets
 android/                  Android host, document-tree access and media service
@@ -148,6 +153,22 @@ Edit translations in the ARB files, not in the generated Dart files.
 - `folder_tracks_screen.dart` - Displays tracks from a selected folder.
 - `track_tile.dart` - Track rows, the error banner and the shared action for starting playback from a list.
 - `track_artwork.dart` - Displays the shared local-track cover or a station logo.
+
+## Project Documentation
+
+The stage documents describe the current Android preview rather than the
+retired single-file MVP workflow:
+
+- [Requirements](F_1_Tasks_and_Requirements/D_1_Tasks_and_Requirements.md)
+- [Minimum version scope](F_2_First_Version_MVP/D_1_First_Version_MVP.md)
+- [Current interface](F_3_Interface_Design/D_1_Interface_Description.md)
+- [Technical decisions](F_4_Technical_Decisions/D_1_Technical_Decisions.md)
+- [Test plan](F_6_Testing_and_Quality_Assurance/D_1_Test_Plan.md), [results](F_6_Testing_and_Quality_Assurance/D_2_Test_Results.md) and [known issues](F_6_Testing_and_Quality_Assurance/D_3_Known_Issues.md)
+- [Release information](F_7_Release_and_Maintenance/D_3_Release_Info.md), [checklist](F_7_Release_and_Maintenance/D_1_Release_Checklist.md) and [changelog](F_7_Release_and_Maintenance/D_2_Changelog.md)
+
+The latest audit passed 39 offline tests and clean analysis. Current-build
+physical-phone acceptance remains unrecorded. See the results for verification
+boundaries; a published preview is not a claim of Google Play readiness.
 
 ## Data and Access
 

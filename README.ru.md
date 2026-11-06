@@ -3,7 +3,12 @@
 [English README](README.md)
 
 Музыкальный проигрыватель на Flutter для Android. Версия 1.6.0+11.
-Соседний MVP-проект `music_player` существует отдельно и не изменяется.
+Актуальное приложение находится в `F_5_Implementation/volna`.
+Отдельной папки MVP-приложения в текущей копии проекта нет.
+
+[Скачать Android ARM64 preview](https://github.com/Viktor-Yrl/F_7_Volna/releases/download/v1.6.0/Volna-1.6.0-android-arm64.apk)
+или открыть [релиз v1.6.0](https://github.com/Viktor-Yrl/F_7_Volna/releases/tag/v1.6.0).
+Опубликованный APK требует Android 7.0 / API 24 или новее и устройство ARM64.
 
 ## Состав приложения
 
@@ -83,7 +88,7 @@ flutter build apk --release --split-per-abi
 | `lib/data/` | Модели, JSON-хранилище и платформенный доступ |
 | `lib/library/` | Выбранные папки и статистика прослушиваний |
 | `lib/player/` | Воспроизведение, основной и мини-плеер |
-| `lib/settings/` | Выбор и сохранение языка |
+| `lib/settings/` | Выбор и сохранение языка и темы |
 | `lib/l10n/` | Переводы ARB и сгенерированные классы |
 | `lib/ui/` | Навигация, экраны папок и общие элементы треков |
 | `android/` | Android-хост, доступ к папкам и медиасервис |
@@ -148,6 +153,22 @@ flutter build apk --release --split-per-abi
 - `folder_tracks_screen.dart` — показывает песни внутри выбранной папки.
 - `track_tile.dart` — строка трека, панель ошибки и общее действие запуска воспроизведения из списка.
 - `track_artwork.dart` — показывает общую обложку локальной песни или логотип радиостанции.
+
+## Документация проекта
+
+Документы этапов написаны на английском и описывают текущую Android-версию,
+а не прежний сценарий MVP с выбором отдельного файла:
+
+- [Требования](F_1_Tasks_and_Requirements/D_1_Tasks_and_Requirements.md)
+- [Состав минимальной версии](F_2_First_Version_MVP/D_1_First_Version_MVP.md)
+- [Текущий интерфейс](F_3_Interface_Design/D_1_Interface_Description.md)
+- [Технические решения](F_4_Technical_Decisions/D_1_Technical_Decisions.md)
+- [План тестирования](F_6_Testing_and_Quality_Assurance/D_1_Test_Plan.md), [результаты](F_6_Testing_and_Quality_Assurance/D_2_Test_Results.md) и [проблемы](F_6_Testing_and_Quality_Assurance/D_3_Known_Issues.md)
+- [Сведения о выпуске](F_7_Release_and_Maintenance/D_3_Release_Info.md), [проверки](F_7_Release_and_Maintenance/D_1_Release_Checklist.md) и [история изменений](F_7_Release_and_Maintenance/D_2_Changelog.md)
+
+При последнем аудите прошли 39 автоматических тестов, анализатор ошибок не нашёл.
+Полная приёмка этой сборки на физическом телефоне пока не зафиксирована.
+Публикация preview не означает готовность к Google Play.
 
 ## Данные и доступ
 

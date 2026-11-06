@@ -1,4 +1,36 @@
-# Verification - 2026-10-27
+# Verification History
+
+## Current Baseline - 2026-11-06
+
+Current application source: `1.6.0+11`, published pre-release `v1.6.0`,
+tag commit `5e3ccb3d7d1c4b340c002049ec1987b7c7d08e83`.
+
+- The documentation audit reran all 39 offline tests and Flutter analysis successfully.
+- GitHub API confirms the public pre-release and its ARM64 APK. The asset digest
+  matches the local APK SHA-256; the recorded size is 21,903,593 bytes.
+- The APK minimum is API 24, target API 36, native ABI arm64-v8a,
+  versionName 1.6.0 and split versionCode 2011.
+- Current scope is Top 100, selected-folder Playlists, fixed 12-station Radio,
+  Settings, full/mini player, background audio and persisted English/Russian
+  plus Dark/Mist Blue choices.
+- Downloads, favorites, manual playlists, single-file import, custom radio
+  editing, device-wide scanning and active iOS delivery are excluded.
+- Live streams were not retested during the documentation audit. Earlier network
+  observations remain qualified by their environment and date.
+- Full physical-phone acceptance is not recorded for this exact artifact.
+
+The authoritative current documents are
+[D_2_Test_Results.md](../../F_6_Testing_and_Quality_Assurance/D_2_Test_Results.md),
+[D_3_Known_Issues.md](../../F_6_Testing_and_Quality_Assurance/D_3_Known_Issues.md) and
+[D_3_Release_Info.md](../../F_7_Release_and_Maintenance/D_3_Release_Info.md).
+The project owner handles documentation commits and pushes.
+
+## Historical Development Records
+
+Everything below is retained historical evidence, beginning with the original
+2026-10-27 verification log. Some sections have retrospective dates, different
+test totals and removed features. They are not the current specification or
+acceptance report, and their old scope must not be interpreted as still implemented.
 
 ## Folder-only library / 2026-11-05
 
